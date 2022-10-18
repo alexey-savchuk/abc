@@ -1,6 +1,6 @@
-from typing import List
+import logging
 from events import Event, EventTag
-from models.request import Request
+from models.bid import Bid
 
 from models.units import GeneratingUnit, ProcessingUnit
 from utils.random import RandomGenerator
@@ -9,21 +9,23 @@ from utils.random import RandomGenerator
 class MyGeneratingUnit(GeneratingUnit):
   """TODO"""
 
-  id: int
   generator: RandomGenerator = RandomGenerator(0.01)
 
-  def __init__(self, id: int) -> None:
-    super().__init__()
-    self.id = id
+  def __init__(self, unit_id: int) -> None:
+    super().__init__(unit_id=unit_id)
 
   def generate(self) -> Event:
 
-    request = Request(unit_id=self.id)
+    time = self.timer.get_current_time() + self.generator()
+    bid = Bid(generating_unit_id=self.unit_id, generation_time=time)
+
     event = Event(
-      self.timer.get_current_time() + self.generator(),
+      time,
       tag=EventTag.GENERATE,
-      data=request
+      data=bid
     )
+
+    logging.debug(f"Generating {event}")
 
     return event
 
@@ -31,9 +33,29 @@ class MyGeneratingUnit(GeneratingUnit):
 class MyProcessingUnit(ProcessingUnit):
   """TODO"""
 
-  def __init__(self) -> None:
-    pass
+  generator: RandomGenerator = RandomGenerator(0.1)
+  busy: bool = False
 
-  def process(self) -> List[Event]:
-    pass
+  def __init__(self, unit_id: int) -> None:
+    super().__init__(unit_id)
+
+  def process(self, bid: Bid) -> Event:
+    time = self.timer.get_current_time() + self.generator()
+
+    bid.processing_unit_id = self.unit_id
+    bid.procession_time = time
+
+    event = Event(
+      time=time,
+      tag=EventTag.PROCESS,
+      data=bid)
+
+    self.busy = True
+
+    logging.debug(f"Processing {event}")
+
+    return event
+
+  def is_busy(self) -> bool:
+    return self.busy
 
