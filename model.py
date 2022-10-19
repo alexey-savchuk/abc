@@ -96,9 +96,6 @@ class Supervisor:
         case EventTag.START:
           self._trigger_all_generating_units()
 
-        case EventTag.SELECT:
-          pass
-
         case EventTag.GENERATE:
           bid = current_event.data
           self._process_bid(bid)
@@ -131,6 +128,9 @@ class Supervisor:
     self.timer.set_current_time(current_event.time)
 
     logging.info(f"Processing event = {current_event}")
+    logging.info(f"Selecting dispatcher list: {self.selecting_dispatcher.bids_to_process}")
+    logging.info(f"Selecting dispatcher list: {self.selecting_dispatcher.buffer.queue}")
+
 
     match current_event.tag:
       case EventTag.START:

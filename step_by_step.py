@@ -9,9 +9,9 @@ from models.my_units import MyGeneratingUnit, MyProcessingUnit
 logging.basicConfig(filename='log/step.log', filemode='w', level=logging.DEBUG)
 
 
-buffer = Buffer(10)
-generating_units = [MyGeneratingUnit(unit_id=i) for i in range(1, 16)]
-processing_units = [MyProcessingUnit(unit_id=i) for i in range(1, 11)]
+buffer = Buffer(3)
+generating_units = [MyGeneratingUnit(unit_id=i) for i in range(1, 4)]
+processing_units = [MyProcessingUnit(unit_id=i) for i in range(1, 6)]
 buffering_dispatcher = MyBufferingDispatcher(buffer)
 selecting_dispatcher = MySelectingDispatcher(processing_units, buffer)
 

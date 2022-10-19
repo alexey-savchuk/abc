@@ -25,5 +25,5 @@ class Bid:
     return "Bid[{}, {}, {}, {}, {}, {}, {}, {}]".format(
       self.generating_unit_id, self.generation_time,
       self.processing_unit_id, self.procession_time,
-      str(self.buffered), self.beffering_time,
-      str(self.refused), self.refusion_time)
+      self.buffered, self.beffering_time,
+      self.refused, self.refusion_time)

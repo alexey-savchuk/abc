@@ -23,7 +23,7 @@ class CyclicQueue:
     return len(self.data) == self.capacity
 
   def push_with_displace(self, x: T) -> Tuple[bool, T]:
-    """TODO"""
+    """Cyclic queue, element refused under pointer"""
 
     displaced = None
 
