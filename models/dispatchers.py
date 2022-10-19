@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 from events import Event
-from models.request import Request
+from models.bid import Bid
 from timer import Timer
 
 
@@ -12,10 +11,12 @@ class BufferingDispatcher(ABC):
   timer: Timer
 
   def __init__(self) -> None:
+    super().__init__()
+
     self.timer = Timer()
 
   @abstractmethod
-  def buffer(self) -> List[Event]:
+  def buffer(self, bid: Bid) -> Event:
     pass
 
 
@@ -25,8 +26,10 @@ class SelectingDispatcher(ABC):
   timer: Timer
 
   def __init__(self) -> None:
+    super().__init__()
+
     self.timer = Timer()
 
   @abstractmethod
-  def process(self, request: Request) -> Event:
+  def process(self, bid: Bid) -> Event:
     pass
