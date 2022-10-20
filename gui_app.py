@@ -89,10 +89,61 @@ with dpg.window(label="Primary", tag="Primary Window"):
                            callback=do_some)
 
         with dpg.tab(label="plot"):
-            dpg.add_simple_plot(label="Simpleplot1", default_value=(0.3, 0.9, 0.5, 0.3), height=300)
-            dpg.add_simple_plot(label="Simpleplot2", default_value=(0.3, 0.9, 2.5, 8.9), overlay="Overlaying",
-                                height=180,
-                                histogram=True)
+            stock_datax = []
+            stock_datay2 = []
+            stock_data1 = []
+            stock_data2 = []
+            stock_data3 = []
+            stock_data4 = []
+            stock_data5 = []
+            for i in range(100):
+                stock_datax.append(i)
+                stock_datay2.append(0)
+                stock_data1.append(400)
+                stock_data2.append(275)
+                stock_data3.append(150)
+                stock_data4.append(500)
+                stock_data5.append(600)
+
+            with dpg.theme(tag="stock_theme1"):
+                with dpg.theme_component(0):
+                    dpg.add_theme_color(dpg.mvPlotCol_Line, (0, 0, 255), category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_Fill, (0, 0, 255, 64), category=dpg.mvThemeCat_Plots)
+
+            with dpg.theme(tag="stock_theme2"):
+                with dpg.theme_component(0):
+                    dpg.add_theme_color(dpg.mvPlotCol_Line, (255, 0, 0), category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_Fill, (255, 0, 0, 64), category=dpg.mvThemeCat_Plots)
+
+            with dpg.theme(tag="stock_theme3"):
+                with dpg.theme_component(0):
+                    dpg.add_theme_color(dpg.mvPlotCol_Line, (0, 255, 0), category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_Fill, (0, 255, 0, 64), category=dpg.mvThemeCat_Plots)
+
+            with dpg.theme(tag="stock_theme4"):
+                with dpg.theme_component(0):
+                    dpg.add_theme_color(dpg.mvPlotCol_Fill, (255, 255, 100, 64), category=dpg.mvThemeCat_Plots)
+
+            with dpg.plot(label="Stock Prices", height=400, width=-1):
+                dpg.add_plot_legend()
+                xaxis = dpg.add_plot_axis(dpg.mvXAxis, label="Days")
+                with dpg.plot_axis(dpg.mvYAxis, label="Price"):
+                    dpg.add_line_series(stock_datax, stock_data1, label="Stock 1")
+                    dpg.bind_item_theme(dpg.last_item(), "stock_theme1")
+                    dpg.add_line_series(stock_datax, stock_data2, label="Stock 2")
+                    dpg.bind_item_theme(dpg.last_item(), "stock_theme2")
+                    dpg.add_line_series(stock_datax, stock_data3, label="Stock 3")
+                    dpg.bind_item_theme(dpg.last_item(), "stock_theme3")
+                    dpg.add_shade_series(stock_datax, stock_data1, label="Stock 1")
+                    dpg.bind_item_theme(dpg.last_item(), "stock_theme1")
+                    dpg.add_shade_series(stock_datax, stock_data2, label="Stock 2")
+                    dpg.bind_item_theme(dpg.last_item(), "stock_theme2")
+                    dpg.add_shade_series(stock_datax, stock_data3, label="Stock 3", y2=stock_datay2)
+                    dpg.bind_item_theme(dpg.last_item(), "stock_theme3")
+                    dpg.add_shade_series(stock_datax, stock_data5, y2=stock_data4, label="Shade between lines")
+                    dpg.bind_item_theme(dpg.last_item(), "stock_theme4")
+                    dpg.fit_axis_data(dpg.top_container_stack())
+                dpg.fit_axis_data(xaxis)
 
         with dpg.tab(label="logger", tag="lmao"):
             dpg.add_text("Step by step mode")
