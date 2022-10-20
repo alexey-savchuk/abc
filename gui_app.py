@@ -36,6 +36,26 @@ def set_way_callback(sender, app_data):
 def do_some():
     print("some")
 
+def add_row():
+    global rows
+    with dpg.table_row(parent="Suffer"):
+        for i in range(0, columns):
+            dpg.add_text(f"row{rows} column{i}", tag=f"cell_{rows}{i}")
+            dpg.bind_item_handler_registry(f"cell_{rows}{i}", f"cell_handler_{rows}{i}")
+    rows += 1
+
+
+def create_table(colcount=3, rowcount=0):
+    global columns
+    global rows
+    columns = colcount
+    rows = 0
+    with dpg.table(parent="lmao", header_row=True, policy=dpg.mvTable_SizingStretchProp,
+                   borders_outerH=True, borders_innerV=True, borders_innerH=True, borders_outerV=True,
+                   tag="Suffer", row_background=True, scrollY=True):
+        for i in range(0, colcount):
+            dpg.add_table_column(tag=f"col_{i}", label=f"column {i}")
+
 
 with dpg.window(label="Primary", tag="Primary Window"):
     with dpg.tab_bar(label="tabs"):
@@ -74,8 +94,11 @@ with dpg.window(label="Primary", tag="Primary Window"):
                                 height=180,
                                 histogram=True)
 
-        with dpg.tab(label="logger"):
-            pass
+        with dpg.tab(label="logger", tag="lmao"):
+            dpg.add_text("Step by step mode")
+            dpg.add_spacer()
+            dpg.add_button(tag="add_row_button", label="add row", callback=add_row)
+            create_table()
 
 
 dpg.create_viewport(title='Custom Title', width=400, height=600)
