@@ -1,8 +1,17 @@
+import random
+from typing import Tuple
 import dearpygui.dearpygui as dpg
 
 dpg.create_context()
 dpg.set_global_font_scale(1.4)
-dpg.create_viewport(title='Coolest table', width=1280, height=720)
+dpg.create_viewport(title='abc', width=1280, height=720)
+
+def outer_api_call() -> Tuple[int]:
+    return (random.random(), random.random(), random.random())
+
+
+NUM_ROWS = 10
+
 
 tag_r_id = 0
 id_fd = 0
@@ -15,25 +24,27 @@ def add_row():
 
     rws_cnt += 1
 
-    if rws_cnt > 9:
+    if rws_cnt > NUM_ROWS:
         delete_row(id_fd)
         id_fd += 1
 
     with dpg.table_row(parent="Suffer", tag=f"some_{tag_r_id}"):
+
         for i in range(0, columns):
-            dpg.add_text(f"row{rows} column{i}", tag=f"cell_{rows}{i}")
-            dpg.bind_item_handler_registry(f"cell_{rows}{i}", f"cell_handler_{rows}{i}")
+            value = random.random()
+            dpg.add_text(f"data = {value:.2f}")
+
     rows += 1
     tag_r_id += 1
 
 
-def create_table(colcount=3, rowcount=8):
+def create_table(colcount=3, rowcount=NUM_ROWS):
     global columns
     global rows
 
     columns = colcount
     rows = 0
-    with dpg.table(parent="main", header_row=True, policy=dpg.mvTable_SizingStretchProp,
+    with dpg.table(parent="Step by Step", header_row=True, policy=dpg.mvTable_SizingStretchProp,
                    borders_outerH=True, borders_innerV=True, borders_innerH=True, borders_outerV=True,
                    tag="Suffer", row_background=True, scrollY=True, no_host_extendX=True):
         for i in range(0, colcount):
@@ -55,8 +66,7 @@ def delete_row(id):
 with dpg.window(tag="main"):
     dpg.add_text("Step by step mode")
     dpg.add_spacer()
-    dpg.add_button(tag="add_row_button", label="add row", callback=add_row)
-    dpg.add_button(tag="delete_row_button", label="delete row", callback=delete_row)
+    dpg.add_button(tag="add_row_button", label="step", callback=add_row)
 
     create_table()
 
