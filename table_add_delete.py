@@ -4,16 +4,30 @@ dpg.create_context()
 dpg.set_global_font_scale(1.4)
 dpg.create_viewport(title='Coolest table', width=1280, height=720)
 
-def add_row(sender="", app_data="", user_data=""):
+tag_r_id = 0
+id_fd = 0
+rws_cnt = 0
+def add_row():
     global rows
-    with dpg.table_row(parent="Suffer"):
+    global tag_r_id
+    global id_fd
+    global rws_cnt
+
+    rws_cnt += 1
+
+    if rws_cnt > 9:
+        delete_row(id_fd)
+        id_fd += 1
+
+    with dpg.table_row(parent="Suffer", tag=f"some_{tag_r_id}"):
         for i in range(0, columns):
-            dpg.add_text(f"{user_data[i]}", tag=f"cell_{rows}{i}")
+            dpg.add_text(f"row{rows} column{i}", tag=f"cell_{rows}{i}")
             dpg.bind_item_handler_registry(f"cell_{rows}{i}", f"cell_handler_{rows}{i}")
     rows += 1
+    tag_r_id += 1
 
 
-def create_table(colcount=3, rowcount=20):
+def create_table(colcount=3, rowcount=8):
     global columns
     global rows
 
@@ -26,13 +40,23 @@ def create_table(colcount=3, rowcount=20):
             dpg.add_table_column(tag=f"col_{i}", label=f"column {i}")
 
         for i in range(rowcount):
-            add_row(user_data=["----------" for i in range(3)])
+            add_row()
+
+
+def delete_row(id):
+    print(id)
+    dpg.delete_item(f"some_{id}")
+
+
+
+
 
 
 with dpg.window(tag="main"):
     dpg.add_text("Step by step mode")
     dpg.add_spacer()
-    dpg.add_button(tag="add_row_button", label="add row", callback=add_row, user_data=["one", "two", "three"])
+    dpg.add_button(tag="add_row_button", label="add row", callback=add_row)
+    dpg.add_button(tag="delete_row_button", label="delete row", callback=delete_row)
 
     create_table()
 
