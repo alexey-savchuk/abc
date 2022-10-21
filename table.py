@@ -1,69 +1,84 @@
-from typing import List
+import logging
+import random
 import dearpygui.dearpygui as dpg
+from model import Supervisor
+
+from models.buffer import Buffer
+from models.dispatchers import BufferingDispatcher, SelectingDispatcher
+from models.units import GeneratingUnit, ProcessingUnit
+
+logging.basicConfig(filename='log/step.log', filemode='w', level=logging.DEBUG)
+
+
+
+def stop_action(sender, app_data):
+  dpg.configure_item("modal_id", show=False)
+
+num_row = 0
+
+def step_action(sender, app_data, user_data):
+
+    global num_row
+    sv = user_data
+    time, type, bid = sv.step()
+
+    if num_row == 0:
+        with dpg.table_row(tag="row_1", parent="calendar"):
+
+            dpg.add_text(f"{time:.2f}")
+            dpg.add_text(type)
+            dpg.add_text(bid)
+    else:
+        with dpg.table_row(tag=f"row_{num_row + 1}", before=f"row_{num_row}"):
+
+            dpg.add_text(f"{time:.2f}")
+            dpg.add_text(type)
+            dpg.add_text(bid)
+
+    num_row += 1
+
+    dpg.set_value(item="buffer", value="BUFFER: " + str([random.randint(0, 9) for i in range(0, 5)]))
 
 
 dpg.create_context()
 
 
-class MyRow:
-
-    def __init__(self, cells: List[int | str]) -> None:
-      self.cells = cells
-
-    def put_cell(self, cell: int | str) -> None:
-      self.cells.append(cell)
-
-    def get_all_cells(self) -> List[int | str]:
-      return self.cells
-
-    def __str__(self) -> str:
-        return str(self.cells)
+with dpg.window(label="Primary Window", tag="primary-window", width=500, height=500):
 
 
-def do_action(sender, app_data, user_data):
+    dpg.add_button(label="Start Simulation")
 
-  x = 0
+    with dpg.popup(dpg.last_item(), mousebutton=dpg.mvMouseButton_Left, modal=True, tag="modal_id"):
 
-  print(user_data)
+        buffer = Buffer(3)
+        generating_units = [GeneratingUnit(unit_id=i) for i in range(1, 4)]
+        processing_units = [ProcessingUnit(unit_id=i) for i in range(1, 6)]
+        buffering_dispatcher = BufferingDispatcher(buffer)
+        selecting_dispatcher = SelectingDispatcher(processing_units, buffer)
 
-  for row in user_data:
-    for cell in row.get_all_cells():
-      dpg.set_value(cell, f"some-text-{x}")
-      x += 1
+        sv = Supervisor(generating_units, processing_units, buffering_dispatcher, selecting_dispatcher)
+        sv.start_step_mode()
 
-  # for row in user_data:
-    # dpg.set_value(row, "new text")
+        dpg.add_button(label="stop", tag="stop-button", callback=stop_action)
+        dpg.add_spacer()
+        dpg.add_spacer()
+        dpg.add_spacer()
 
 
-with dpg.window(label="Main Window", tag="main-window", width=500, height=500):
+        dpg.add_text("SIMULATION:")
+        dpg.add_button(label="step", tag="step-button", callback=step_action, user_data=sv)
+        dpg.add_text("BUFFER: [1, 2, 3, 4, 5]", tag="buffer")
 
-  lst = []
+        with dpg.table(parent="Step by Step", header_row=True, policy=dpg.mvTable_SizingStretchProp,
+                        borders_outerH=True, borders_innerV=True, borders_innerH=True, borders_outerV=True,
+                        tag="calendar", row_background=True, scrollY=True, no_host_extendX=True):
 
-  with dpg.table(header_row=False):
-    # use add_table_column to add columns to the table,
-    # table columns use child slot 0
-    dpg.add_table_column()
-    dpg.add_table_column()
-    dpg.add_table_column()
+            dpg.add_table_column(label="Model Time")
+            dpg.add_table_column(label="Event Type")
+            dpg.add_table_column(label="Current Bid")
 
-    # add_table_next_column will jump to the next row
-    # once it reaches the end of the columns
-    # table next column use slot 1
-    for i in range(0, 4):
 
-        with dpg.table_row():
 
-            my_row = MyRow([])
-
-            for j in range(0, 3):
-                text = dpg.add_text(f"Row{i} Column{j}")
-                print(text, dpg.get_value(text))
-                my_row.put_cell(text)
-
-            print(my_row)
-            lst.append(my_row)
-
-  dpg.add_button(label="Do action", tag="action-button", user_data=lst, callback=do_action)
 
 
 dpg.create_viewport(title='Custom Title', width=600, height=200)
@@ -71,7 +86,7 @@ dpg.create_viewport(title='Custom Title', width=600, height=200)
 dpg.setup_dearpygui()
 dpg.show_viewport()
 
-dpg.set_primary_window(window="main-window", value=True)
+dpg.set_primary_window(window="primary-window", value=True)
 
 dpg.start_dearpygui()
 dpg.destroy_context()

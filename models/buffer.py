@@ -6,7 +6,7 @@ from utils.cyclic_queue import CyclicQueue
 
 class Buffer:
 
-  queue: CyclicQueue
+  queue: CyclicQueue[Bid]
 
   def __init__(self, capacity: int) -> None:
     super().__init__()

@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, List
+from typing import Iterable, List, Tuple
 from events import Event, EventTag
 from models.bid import Bid
 
@@ -10,155 +10,120 @@ from timer import Timer
 
 class Supervisor:
 
-  generating_units: List[GeneratingUnit]
-  processing_units: List[ProcessingUnit]
+    generating_units: List[GeneratingUnit]
+    processing_units: List[ProcessingUnit]
 
-  buffering_dispatcher: BufferingDispatcher
-  selecting_dispatcher: SelectingDispatcher
+    buffering_dispatcher: BufferingDispatcher
+    selecting_dispatcher: SelectingDispatcher
 
-  events: List[Event]
-  timer: Timer
+    events: List[Event]
+    timer: Timer
 
-  def __init__(self,
-      generating_units: List[GeneratingUnit],
-      processing_units: List[ProcessingUnit],
-      buffering_dispatcher: BufferingDispatcher,
-      selecting_dispatcher: SelectingDispatcher) -> None:
+    def __init__(
+        self,
+        generating_units: List[GeneratingUnit],
+        processing_units: List[ProcessingUnit],
+        buffering_dispatcher: BufferingDispatcher,
+        selecting_dispatcher: SelectingDispatcher
+    ) -> None:
 
-    self.generating_units = generating_units
-    self.processing_units = processing_units
-    self.buffering_dispatcher = buffering_dispatcher
-    self.selecting_dispatcher = selecting_dispatcher
+        self.generating_units = generating_units
+        self.processing_units = processing_units
+        self.buffering_dispatcher = buffering_dispatcher
+        self.selecting_dispatcher = selecting_dispatcher
 
-    self.events = []
-    self.timer = Timer()
+        self.events = []
+        self.timer = Timer()
 
   # Utils
-  def _add_new_event(self, event: Event) -> None:
-    self.events.append(event)
-    self._preserve_order()
+    def _add_new_event(self, event: Event) -> None:
+        self.events.append(event)
+        self._preserve_order()
 
-  def _add_new_events(self, events: Iterable[Event]) -> None:
-    self.events.extend(events)
-    self._preserve_order()
+    def _add_new_events(self, events: Iterable[Event]) -> None:
+        self.events.extend(events)
+        self._preserve_order()
 
-  def _get_next_event(self) -> Event:
-    return self.events.pop(0)
+    def _get_next_event(self) -> Event:
+        return self.events.pop(0)
 
-  def _preserve_order(self) -> None:
-    self.events.sort(key=lambda event: event.time)
+    def _preserve_order(self) -> None:
+        self.events.sort(key=lambda event: event.time)
 
-  # Actions
-  def _start_modeling(self) -> None:
-    time = 0
-    tag = EventTag.START
-    new_event = Event(time, tag)
-    self._add_new_event(new_event)
+    # Actions
+    def _start_modeling(self) -> None:
+        time = 0
+        tag = EventTag.START
+        new_event = Event(time, tag)
+        self._add_new_event(new_event)
 
-  def _trigger_all_generating_units(self) -> None:
-    new_events = [unit.generate() for unit in self.generating_units]
-    self._add_new_events(new_events)
+    def _trigger_all_generating_units(self) -> None:
+        new_events = [unit.generate() for unit in self.generating_units]
+        self._add_new_events(new_events)
 
-  def _trigger_generating_unit(self, unit_id: int) -> None:
-    units = [unit for unit in self.generating_units if unit.unit_id == unit_id]
-    new_events = [unit.generate() for unit in units]
-    self._add_new_events(new_events)
+    def _trigger_generating_unit(self, unit_id: int) -> None:
+        new_events = [unit.generate() for unit in self.generating_units if unit.unit_id == unit_id]
+        self._add_new_events(new_events)
 
-  def _process_bid(self, bid: Bid) -> None:
-    new_event = self.selecting_dispatcher.process(bid)
-    self._add_new_event(new_event)
+    def _trigger_processing_unit(self, unit_id: int) -> None:
+        for unit in self.processing_units:
+            if unit.unit_id == unit_id:
+                unit.change_state()
 
-  def _update_statistics(self, bid: Bid) -> None:
-    logging.info(f"Statistics: {bid}")
+    def _trigger_buffering_dispatcher(self, bid: Bid) -> None:
+        self.buffering_dispatcher.buffer(bid)
 
-  def _trigger_selecting_dispatcher(self) -> None:
-    time = self.timer.get_current_time()
-    tag = EventTag.SELECT
-    new_event = Event(time, tag)
-    self._add_new_event(new_event)
+    def _trigger_selecting_dispatcher(self) -> None:
+        new_event = self.selecting_dispatcher.select()
+        if new_event:
+            self._add_new_event(new_event)
 
-  def _trigger_buffering_dispatcher(self, bid: Bid) -> None:
-    new_event = self.buffering_dispatcher.buffer(bid)
-    self._add_new_event(new_event)
+    def _update_statistics(self, bid: Bid) -> None:
+        current_time = self.timer.get_current_time()
+        logging.info(f"{current_time:.2f}: update statistics - {bid}")
 
-  # Start modeling
-  def start(self) -> None:
-    self._start_modeling()
+    def _end_modeling(self) -> None:
+        self.events = []
 
-    while len(self.events) != 0:
+    def start_step_mode(self):
+        self._start_modeling()
 
-      current_event = self._get_next_event()
-      self.timer.set_current_time(current_event.time)
+    def end(self):
+        time = self.timer.current_time
+        tag = EventTag.END
+        new_event = Event(time, tag)
+        self._add_new_event(new_event)
 
-      logging.info(f"Processing event = {current_event}")
+    def step(self) -> Tuple:
+        current_event = self._get_next_event()
+        current_time = current_event.time
 
-      match current_event.tag:
-        case EventTag.START:
-          self._trigger_all_generating_units()
+        self.timer.set_current_time(current_time)
 
-        case EventTag.GENERATE:
-          bid = current_event.data
-          self._process_bid(bid)
-          self._trigger_generating_unit(bid.generating_unit_id)
+        current_bid = current_event.data
 
-        case EventTag.BUFFER:
-          bid = current_event.data
-          self._trigger_buffering_dispatcher(bid)
+        logging.info(f"{current_time:.2f}: processing {current_event}")
+        logging.info(f"{current_time:.2f}: buffer - {[str(bid) for bid in self.buffering_dispatcher.memory.queue.data]}")
 
-        case EventTag.PROCESS:
-          bid = current_event.data
+        match current_event.tag:
 
-          self._update_statistics(bid)
-          # self._trigger_selecting_dispatcher()
+            case EventTag.START:
+                self._trigger_all_generating_units()
 
-        case EventTag.EMPTY:
-          pass
+            case EventTag.GENERATE:
+                self._trigger_generating_unit(current_bid.generating_unit_id)
+                self._trigger_buffering_dispatcher(current_bid)
+                self._trigger_selecting_dispatcher()
 
-        case EventTag.REFUSE:
-          pass
+            case EventTag.PROCESS:
+                self._trigger_processing_unit(current_bid.processing_unit_id)
+                self._update_statistics(current_bid)
+                self._trigger_selecting_dispatcher()
 
-        case _:
-          raise ValueError("Supervisor met unknown event tag")
+            case EventTag.END:
+                self._end_modeling()
 
-  def start_step_mode(self):
-    self._start_modeling()
+            case _:
+                raise ValueError("Supervisor met unknown event tag")
 
-  def step(self) -> None:
-    current_event = self._get_next_event()
-    self.timer.set_current_time(current_event.time)
-
-    logging.info(f"Processing event = {current_event}")
-    logging.info(f"Selecting dispatcher list: {self.selecting_dispatcher.bids_to_process}")
-    logging.info(f"Selecting dispatcher list: {self.selecting_dispatcher.buffer.queue}")
-
-
-    match current_event.tag:
-      case EventTag.START:
-        self._trigger_all_generating_units()
-
-      case EventTag.SELECT:
-        pass
-
-      case EventTag.GENERATE:
-        bid = current_event.data
-        self._process_bid(bid)
-        self._trigger_generating_unit(bid.generating_unit_id)
-
-      case EventTag.BUFFER:
-        bid = current_event.data
-        self._trigger_buffering_dispatcher(bid)
-
-      case EventTag.PROCESS:
-        bid = current_event.data
-
-        self._update_statistics(bid)
-        # self._trigger_selecting_dispatcher()
-
-      case EventTag.EMPTY:
-        pass
-
-      case EventTag.REFUSE:
-        pass
-
-      case _:
-        raise ValueError("Supervisor met unknown event tag")
+        return current_time, current_event.tag.name, current_bid

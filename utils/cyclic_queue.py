@@ -1,9 +1,9 @@
-from typing import List, Tuple, TypeVar
+from typing import Generic, List, Tuple, TypeVar
 
 
 T = TypeVar('T')
 
-class CyclicQueue:
+class CyclicQueue(Generic[T]):
 
   data: List[T]
   capacity: int

@@ -8,12 +8,9 @@ class EventTag(Enum):
   """TODO"""
 
   START = auto()
-  SELECT = auto()
-  BUFFER = auto()
-  PROCESS = auto()
   GENERATE = auto()
-  EMPTY = auto()
-  REFUSE = auto()
+  PROCESS = auto()
+  END = auto()
 
 
 @dataclass

@@ -1,40 +1,64 @@
-from abc import ABC, abstractmethod
-from typing import List
+import logging
 
-from events import Event
+from events import Event, EventTag
 from models.bid import Bid
 from timer import Timer
+from utils.random import RandomGenerator
 
 
-class GeneratingUnit(ABC):
-  """TODO"""
+class GeneratingUnit:
+    """TODO"""
 
-  unit_id: int
-  timer: Timer
+    def __init__(self, unit_id: int) -> None:
 
-  def __init__(self, unit_id: int) -> None:
-    super().__init__()
+        self.timer = Timer()
+        self.generator = RandomGenerator(0.01)
 
-    self.unit_id = unit_id
-    self.timer = Timer()
+        self.unit_id = unit_id
 
-  @abstractmethod
-  def generate(self) -> Event:
-    pass
+    def generate(self) -> Event:
+
+        current_time = self.timer.get_current_time()
+        time = current_time + self.generator()
+
+        bid = Bid(generating_unit_id=self.unit_id, generation_time=time)
+
+        event = Event(time, tag=EventTag.GENERATE, data=bid)
+
+        logging.debug(f"{current_time:.2f}: unit {self.unit_id} generating {event}")
+
+        return event
 
 
-class ProcessingUnit(ABC):
-  """TODO"""
+class ProcessingUnit:
+    """TODO"""
 
-  unit_id: int
-  timer: Timer
+    def __init__(self, unit_id: int) -> None:
 
-  def __init__(self, unit_id: int) -> None:
-    super().__init__()
+        self.timer = Timer()
+        self.generator = RandomGenerator(0.1)
 
-    self.unit_id = unit_id
-    self.timer = Timer()
+        self.unit_id = unit_id
+        self.free = True
 
-  @abstractmethod
-  def process(self, bid: Bid) -> Event:
-    pass
+    def is_free(self) -> bool:
+        return self.free
+
+    def change_state(self) -> None:
+        self.free = not self.free
+
+    def process(self, bid: Bid) -> Event:
+
+        current_time = self.timer.get_current_time()
+        time = current_time + self.generator()
+
+        bid.processing_unit_id = self.unit_id
+        bid.procession_time = time
+
+        event = Event(time=time, tag=EventTag.PROCESS, data=bid)
+
+        self.free = False
+
+        logging.debug(f"{current_time:.2f}: unit {self.unit_id} generating {event}")
+
+        return event
