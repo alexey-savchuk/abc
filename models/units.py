@@ -12,7 +12,7 @@ class GeneratingUnit:
     def __init__(self, unit_id: int) -> None:
 
         self.timer = Timer()
-        self.generator = RandomGenerator(0.01)
+        self.generator = RandomGenerator(1)
 
         self.unit_id = unit_id
 
@@ -36,7 +36,7 @@ class ProcessingUnit:
     def __init__(self, unit_id: int) -> None:
 
         self.timer = Timer()
-        self.generator = RandomGenerator(0.1)
+        self.generator = RandomGenerator(0.001)
 
         self.unit_id = unit_id
         self.free = True

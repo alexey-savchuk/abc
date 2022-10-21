@@ -103,7 +103,7 @@ class Supervisor:
         current_bid = current_event.data
 
         logging.info(f"{current_time:.2f}: processing {current_event}")
-        logging.info(f"{current_time:.2f}: buffer - {[str(bid) for bid in self.buffering_dispatcher.memory.queue.data]}")
+        logging.info(f"{current_time:.2f}: buffer - {self.buffering_dispatcher.memory.queue.data}")
 
         match current_event.tag:
 
