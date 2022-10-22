@@ -18,20 +18,14 @@ class BufferingDispatcher:
 
     def buffer(self, bid: Bid):
 
-        time = self.timer.get_current_time()
-        bid.buffered = True
-        bid.beffering_time = time
-
-        StepRecorder.pushed = bid
+        StepRecorder.pushed_bid = bid
         refused_bid = self.memory.push_with_displace(bid)
-        StepRecorder.refused = refused_bid
-
-        logging.debug(f"Buffeting {bid}")
+        StepRecorder.refused_bid = refused_bid
 
         if refused_bid:
-            refused_bid.refused = True
-            refused_bid.refusion_time = time
+            refused_bid.is_refused = True
 
+        logging.debug(f"Buffering {bid}")
         logging.debug(f"Refused {refused_bid}")
 
 
@@ -93,6 +87,7 @@ class SelectingDispatcher:
         bid = self._get_new_bid()
         StepRecorder.poped = bid
         if bid:
+            bid.selection_time = self.timer.get_current_time()
             event = self._process(bid)
 
         logging.debug(f"select: target id = {self.target_id}")

@@ -38,14 +38,14 @@ with dpg.window(tag="primary-window"):
     dpg.add_separator()
     dpg.add_slider_float(label="generation freq. [approx. bid per time]",
                          tag=SETTINGS_GENERATION_FREQ,
-                         default_value=0.1,
+                         default_value=1.0,
                          min_value=0.1,
                          max_value=1.0,
                          format="%.1f")
 
     dpg.add_slider_float(label="processing freq. [approx. bid per time]",
                          tag=SETTINGS_PROCESSING_FREQ,
-                         default_value=0.1,
+                         default_value=1.0,
                          min_value=0.1,
                          max_value=1.0,
                          format="%.1f")

@@ -115,7 +115,8 @@ def step_action(sender, app_data) -> None:
     global num_events
     global supervisor
 
-    time, event, bid, buffer, pushed, poped, refused = supervisor.step()
+    supervisor.step()
+    time, event, bid = supervisor.get_event_info()
 
     if num_events == 0:
         with dpg.table_row(tag="row_1", parent=EVENT_CALENDAR):
@@ -128,7 +129,7 @@ def step_action(sender, app_data) -> None:
             dpg.add_text(event)
             dpg.add_text(bid)
 
-
+    buffer, pushed, poped, refused = supervisor.get_buffer_info()
     _draw_memory_buffer(buffer, pushed, poped, refused)
 
     num_events += 1
@@ -139,7 +140,8 @@ def stop_action(sender, app_data) -> None:
     global supervisor
 
     supervisor.end_step_mode()
-    time, event, bid, _, _, _, _ = supervisor.step()
+    supervisor.step()
+    time, event, bid = supervisor.get_event_info()
 
     with dpg.table_row(tag=f"row_{num_events + 1}", before=f"row_{num_events}"):
         dpg.add_text(f"{time:.2f}")
@@ -150,44 +152,20 @@ def stop_action(sender, app_data) -> None:
     dpg.configure_item(item=STOP_BUTTON, enabled=False)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def start_auto_mode(sender, app_data) -> None:
 
+    _save_settings()
+
     dpg.delete_item(item=SUMMARY_TABLE_CONTENT_BLOCK, children_only=True)
+
+    dpg.add_text("processing...", tag="dummy_text", parent=SUMMARY_TABLE_CONTENT_BLOCK)
     dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=True)
+
+    global supervisor
+    supervisor = _get_supervisor()
+
+
+    response = supervisor.start_auto_mode()
+
+    dpg.delete_item(item="dummy_text")
+    dpg.add_text(response, parent=SUMMARY_TABLE_CONTENT_BLOCK)

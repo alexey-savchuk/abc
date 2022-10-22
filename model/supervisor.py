@@ -1,9 +1,12 @@
 import logging
+import math
+import statistics
 from typing import Iterable, List, Tuple
+
+
 from model.event import Event, EventTag
 from model.bid import Bid
 from model.buffer import Buffer
-
 from model.dispatchers import BufferingDispatcher, SelectingDispatcher
 from model.units import GeneratingUnit, ProcessingUnit
 from model.step_record import StepRecorder
@@ -12,17 +15,14 @@ from model.timer import Timer
 
 class Supervisor:
 
-    def __init__(
-        self,
-        num_generating_units: int,
-        num_processing_untis: int,
-        memory_buffer_capacity: int,
-        generation_frequency: float,
-        processing_frequency: float
-    ) -> None:
+    def __init__(self, num_generating_units: int, num_processing_untis: int, memory_buffer_capacity: int,
+                 generation_frequency: float, processing_frequency: float) -> None:
 
         self.events: List[Event] = []
         self.timer: Timer = Timer()
+
+        self.num_generating_units = num_generating_units
+        self.num_processing_units = num_processing_untis
 
         self.generating_units = [GeneratingUnit(i + 1, generation_frequency) for i in range(num_generating_units)]
         self.processing_units = [ProcessingUnit(i + 1, processing_frequency) for i in range(num_processing_untis)]
@@ -47,7 +47,7 @@ class Supervisor:
     def _preserve_order(self) -> None:
         self.events.sort(key=lambda event: event.time)
 
-    # Actions
+    # Step mode actions
     def _start_modeling(self) -> None:
         time = self.timer.get_current_time()
         tag = EventTag.START
@@ -82,6 +82,7 @@ class Supervisor:
     def _end_modeling(self) -> None:
         self.events = []
 
+    # Step mode
     def start_step_mode(self):
         self._start_modeling()
 
@@ -93,22 +94,24 @@ class Supervisor:
         self._add_new_event(new_event)
 
     def step(self) -> Tuple:
-        StepRecorder.pushed = None
-        StepRecorder.poped = None
-        StepRecorder.refused = None
-
         current_event = self._get_next_event()
-        current_time = current_event.time
 
+        current_time = current_event.time
         self.timer.set_current_time(current_time)
 
         current_bid = current_event.data
 
+        StepRecorder.current_time = current_time
+        StepRecorder.event_type = current_event.tag.name
+        StepRecorder.current_bid = current_bid
+        StepRecorder.pushed_bid = None
+        StepRecorder.poped_bid = None
+        StepRecorder.refused_bid = None
+
         logging.info(f"{current_time:.2f}: processing {current_event}")
-        logging.info(f"{current_time:.2f}: buffer - {self.buffering_dispatcher.memory.queue.data}")
+        logging.info(f"{current_time:.2f}: current buffer {[bid for bid in self.memory_buffer]}")
 
         match current_event.tag:
-
             case EventTag.START:
                 self._trigger_all_generating_units()
 
@@ -128,4 +131,38 @@ class Supervisor:
             case _:
                 raise ValueError("Supervisor met unknown event tag")
 
-        return current_time, current_event.tag.name, current_bid, self.memory_buffer, StepRecorder.pushed, StepRecorder.poped, StepRecorder.refused
+    def get_event_info(self) -> Tuple:
+        return (StepRecorder.current_time,
+                StepRecorder.event_type,
+                StepRecorder.current_bid)
+
+    def get_buffer_info(self) -> Tuple:
+        return (self.memory_buffer,
+                StepRecorder.pushed_bid,
+                StepRecorder.poped_bid,
+                StepRecorder.refused_bid)
+
+    # Auto mode
+    def start_auto_mode(self):
+
+        map = {i + 1: [] for i in range(self.num_generating_units)}
+        num_refused = 0
+        num_processed = 0
+
+        self.start_step_mode()
+
+        bids = []
+        for i in range(10000):
+            self.step()
+
+            _, event_type, bid = self.get_event_info()
+
+            if event_type == EventTag.GENERATE.name:
+                bids.append(bid)
+
+        self.end_step_mode()
+
+        for bid in bids:
+            print(bid)
+
+        return "Done"
