@@ -1,6 +1,6 @@
 import logging
 from typing import Iterable, List, Tuple
-from events import Event, EventTag
+from event import Event, EventTag
 from models.bid import Bid
 
 from models.dispatchers import BufferingDispatcher, SelectingDispatcher
@@ -126,4 +126,4 @@ class Supervisor:
             case _:
                 raise ValueError("Supervisor met unknown event tag")
 
-        return current_time, current_event.tag.name, current_bid
+        return current_time, current_event.tag.name, current_bid, self.buffering_dispatcher.memory.queue.data

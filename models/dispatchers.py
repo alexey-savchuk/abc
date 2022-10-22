@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple
 
-from events import Event
+from event import Event
 from models.bid import Bid
 from models.buffer import Buffer
 from models.units import ProcessingUnit

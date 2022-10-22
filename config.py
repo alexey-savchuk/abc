@@ -8,4 +8,4 @@ class Config:
   processing_units_count: int = 0
   buffer_capacity: int = 0
 
-  generation_frequency: float = 0.1
+  generation_frequency: float = 0

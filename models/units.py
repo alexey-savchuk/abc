@@ -1,6 +1,6 @@
 import logging
 
-from events import Event, EventTag
+from event import Event, EventTag
 from models.bid import Bid
 from timer import Timer
 from utils.random import RandomGenerator
@@ -36,7 +36,7 @@ class ProcessingUnit:
     def __init__(self, unit_id: int) -> None:
 
         self.timer = Timer()
-        self.generator = RandomGenerator(0.001)
+        self.generator = RandomGenerator(1)
 
         self.unit_id = unit_id
         self.free = True
