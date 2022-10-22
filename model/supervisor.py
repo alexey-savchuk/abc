@@ -1,36 +1,38 @@
 import logging
 from typing import Iterable, List, Tuple
-from event import Event, EventTag
-from models.bid import Bid
-from models.buffer import Buffer
+from model.event import Event, EventTag
+from model.bid import Bid
+from model.buffer import Buffer
 
-from models.dispatchers import BufferingDispatcher, SelectingDispatcher
-from models.units import GeneratingUnit, ProcessingUnit
-from step_record import StepRecorder
-from timer import Timer
+from model.dispatchers import BufferingDispatcher, SelectingDispatcher
+from model.units import GeneratingUnit, ProcessingUnit
+from model.step_record import StepRecorder
+from model.timer import Timer
 
 
 class Supervisor:
 
     def __init__(
         self,
-        generating_units: List[GeneratingUnit],
-        processing_units: List[ProcessingUnit],
-        buffer: Buffer,
-        buffering_dispatcher: BufferingDispatcher,
-        selecting_dispatcher: SelectingDispatcher
+        num_generating_units: int,
+        num_processing_untis: int,
+        memory_buffer_capacity: int,
+        generation_frequency: float,
+        processing_frequency: float
     ) -> None:
 
         self.events: List[Event] = []
         self.timer: Timer = Timer()
 
-        self.generating_units: List[GeneratingUnit] = generating_units
-        self.processing_units: List[ProcessingUnit] = processing_units
-        self.buffer: Buffer = buffer
-        self.buffering_dispatcher: BufferingDispatcher = buffering_dispatcher
-        self.selecting_dispatcher: SelectingDispatcher = selecting_dispatcher
+        self.generating_units = [GeneratingUnit(i + 1, generation_frequency) for i in range(num_generating_units)]
+        self.processing_units = [ProcessingUnit(i + 1, processing_frequency) for i in range(num_processing_untis)]
 
-  # Utils
+        self.memory_buffer = Buffer(memory_buffer_capacity)
+
+        self.buffering_dispatcher = BufferingDispatcher(self.memory_buffer)
+        self.selecting_dispatcher = SelectingDispatcher(self.processing_units, self.memory_buffer)
+
+    # Utils
     def _add_new_event(self, event: Event) -> None:
         self.events.append(event)
         self._preserve_order()
@@ -47,7 +49,7 @@ class Supervisor:
 
     # Actions
     def _start_modeling(self) -> None:
-        time = 0
+        time = self.timer.get_current_time()
         tag = EventTag.START
         new_event = Event(time, tag)
         self._add_new_event(new_event)
@@ -83,10 +85,11 @@ class Supervisor:
     def start_step_mode(self):
         self._start_modeling()
 
-    def end(self):
+    def end_step_mode(self):
         time = self.timer.current_time
         tag = EventTag.END
         new_event = Event(time, tag)
+        self.events = []
         self._add_new_event(new_event)
 
     def step(self) -> Tuple:
@@ -125,4 +128,4 @@ class Supervisor:
             case _:
                 raise ValueError("Supervisor met unknown event tag")
 
-        return current_time, current_event.tag.name, current_bid, self.buffer, StepRecorder.pushed, StepRecorder.poped, StepRecorder.refused
+        return current_time, current_event.tag.name, current_bid, self.memory_buffer, StepRecorder.pushed, StepRecorder.poped, StepRecorder.refused

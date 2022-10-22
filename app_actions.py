@@ -1,39 +1,29 @@
-from dataclasses import dataclass
 from typing import Iterable
+
 import dearpygui.dearpygui as dpg
 
 from app_tags import *
-from model import Supervisor
-from models.bid import Bid
-from models.buffer import Buffer
-from models.dispatchers import BufferingDispatcher, SelectingDispatcher
-from models.units import GeneratingUnit, ProcessingUnit
+from app_settings import *
 
-
-class Settings:
-    num_sources: int
-    num_devices: int
-    buffer_capacity: int
+from model.bid import Bid
+from model.supervisor import Supervisor
 
 
 def _save_settings():
     Settings.num_sources = dpg.get_value(item=SETTINGS_NUM_SOURCES)
     Settings.num_devices = dpg.get_value(item=SETTINGS_NUM_DEVICES)
     Settings.buffer_capacity = dpg.get_value(item=SETTINGS_BUFFER_CAPACITY)
+    Settings.generation_freq = dpg.get_value(item=SETTINGS_GENERATION_FREQ)
+    Settings.processing_freq = dpg.get_value(item=SETTINGS_PROCESSING_FREQ)
 
 
 def _get_supervisor() -> Supervisor:
 
-    generating_units = [GeneratingUnit(i + 1) for i in range(Settings.num_sources)]
-    processing_units = [ProcessingUnit(i + 1) for i in range(Settings.num_devices)]
-
-    buffer = Buffer(Settings.buffer_capacity)
-
-    buffering_dispatcher = BufferingDispatcher(buffer)
-    selecting_dispatcher = SelectingDispatcher(processing_units, buffer)
-
-    supervisor = Supervisor(generating_units, processing_units, buffer,
-                            buffering_dispatcher, selecting_dispatcher)
+    supervisor = Supervisor(num_generating_units=Settings.num_sources,
+                            num_processing_untis=Settings.num_devices,
+                            memory_buffer_capacity=Settings.buffer_capacity,
+                            generation_frequency=Settings.generation_freq,
+                            processing_frequency=Settings.processing_freq)
 
     return supervisor
 
@@ -113,11 +103,14 @@ def start_step_mode(sender, app_data) -> None:
     supervisor = _get_supervisor()
     supervisor.start_step_mode()
 
+    dpg.configure_item(item=STEP_BUTTON, enabled=True)
+    dpg.configure_item(item=STOP_BUTTON, enabled=True)
+
     dpg.configure_item(item=EVENT_CALENDAR_WINDOW, show=True)
     dpg.configure_item(item=MEMORY_BUFFER_WINDOW, show=True)
 
 
-def make_step(sender, app_data) -> None:
+def step_action(sender, app_data) -> None:
 
     global num_events
     global supervisor
@@ -126,13 +119,11 @@ def make_step(sender, app_data) -> None:
 
     if num_events == 0:
         with dpg.table_row(tag="row_1", parent=EVENT_CALENDAR):
-
             dpg.add_text(f"{time:.2f}")
             dpg.add_text(event)
             dpg.add_text(bid)
     else:
         with dpg.table_row(tag=f"row_{num_events + 1}", before=f"row_{num_events}"):
-
             dpg.add_text(f"{time:.2f}")
             dpg.add_text(event)
             dpg.add_text(bid)
@@ -142,7 +133,21 @@ def make_step(sender, app_data) -> None:
 
     num_events += 1
 
+def stop_action(sender, app_data) -> None:
 
+    global num_events
+    global supervisor
+
+    supervisor.end_step_mode()
+    time, event, bid, _, _, _, _ = supervisor.step()
+
+    with dpg.table_row(tag=f"row_{num_events + 1}", before=f"row_{num_events}"):
+        dpg.add_text(f"{time:.2f}")
+        dpg.add_text(event)
+        dpg.add_text(bid)
+
+    dpg.configure_item(item=STEP_BUTTON, enabled=False)
+    dpg.configure_item(item=STOP_BUTTON, enabled=False)
 
 
 
@@ -184,5 +189,5 @@ def make_step(sender, app_data) -> None:
 
 def start_auto_mode(sender, app_data) -> None:
 
-    dpg.delete_item(item="auto_mode_data", children_only=True)
-    dpg.configure_item(item="auto_mode_window", show=True)
+    dpg.delete_item(item=SUMMARY_TABLE_CONTENT_BLOCK, children_only=True)
+    dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=True)

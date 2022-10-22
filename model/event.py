@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from models.bid import Bid
+from model.bid import Bid
 
 
 class EventTag(Enum):

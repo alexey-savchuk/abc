@@ -1,12 +1,12 @@
 import logging
 from typing import List
 
-from event import Event
-from models.bid import Bid
-from models.buffer import Buffer
-from models.units import ProcessingUnit
-from step_record import StepRecorder
-from timer import Timer
+from model.event import Event
+from model.bid import Bid
+from model.buffer import Buffer
+from model.units import ProcessingUnit
+from model.step_record import StepRecorder
+from model.timer import Timer
 
 
 class BufferingDispatcher:

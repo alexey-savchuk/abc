@@ -2,13 +2,13 @@
 
 import logging
 import dearpygui.dearpygui as dpg
-from app_actions import make_step, start_auto_mode, start_step_mode
+from app_actions import step_action, start_auto_mode, start_step_mode, stop_action
 
 
 from app_tags import *
 
 
-logging.basicConfig(filename='log/debug.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename='app.log', filemode='w', level=logging.DEBUG)
 
 
 dpg.create_context()
@@ -36,15 +36,15 @@ with dpg.window(tag="primary-window"):
     dpg.add_separator()
     dpg.add_spacer()
     dpg.add_separator()
-    dpg.add_slider_float(label="generation freq. [bid per time unit]",
+    dpg.add_slider_float(label="generation freq. [approx. bid per time]",
                          tag=SETTINGS_GENERATION_FREQ,
                          default_value=0.1,
                          min_value=0.1,
                          max_value=1.0,
                          format="%.1f")
 
-    dpg.add_slider_float(label="procession freq. [bid per time unit]",
-                         tag=SETTINGS_PROCESSION_FREQ,
+    dpg.add_slider_float(label="processing freq. [approx. bid per time]",
+                         tag=SETTINGS_PROCESSING_FREQ,
                          default_value=0.1,
                          min_value=0.1,
                          max_value=1.0,
@@ -60,7 +60,11 @@ with dpg.window(tag="primary-window"):
                     show=False,
                     width=300, height=300):
 
-        dpg.add_button(label="step", callback=make_step)
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="step", tag=STEP_BUTTON, callback=step_action)
+            dpg.add_button(label="stop", tag=STOP_BUTTON, callback=stop_action)
+
+        dpg.add_spacer()
         dpg.add_group(tag=EVENT_CALENDAR_CONTENT_BLOCK)
 
     with dpg.window(label="Memory Buffer",

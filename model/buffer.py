@@ -1,4 +1,4 @@
-from models.bid import Bid
+from model.bid import Bid
 from utils.cyclic_queue import CyclicQueue
 
 

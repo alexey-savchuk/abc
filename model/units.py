@@ -1,18 +1,21 @@
 import logging
 
-from event import Event, EventTag
-from models.bid import Bid
-from timer import Timer
+from model.event import Event, EventTag
+from model.bid import Bid
+from model.timer import Timer
 from utils.random import RandomGenerator
 
 
 class GeneratingUnit:
     """TODO"""
 
-    def __init__(self, unit_id: int) -> None:
+    def __init__(self, unit_id: int, generation_frequency: float) -> None:
+
+        if generation_frequency <= 0:
+            raise ValueError("Generation frequency must be positive")
 
         self.timer = Timer()
-        self.generator = RandomGenerator(1)
+        self.generator = RandomGenerator(generation_frequency)
 
         self.unit_id = unit_id
 
@@ -33,10 +36,14 @@ class GeneratingUnit:
 class ProcessingUnit:
     """TODO"""
 
-    def __init__(self, unit_id: int) -> None:
+    def __init__(self, unit_id: int, processing_frequency: float) -> None:
+
+        if processing_frequency <= 0:
+            raise ValueError("Processing frequency must be positive")
+
 
         self.timer = Timer()
-        self.generator = RandomGenerator(1)
+        self.generator = RandomGenerator(processing_frequency)
 
         self.unit_id = unit_id
         self.free = True
@@ -53,7 +60,7 @@ class ProcessingUnit:
         time = current_time + self.generator()
 
         bid.processing_unit_id = self.unit_id
-        bid.procession_time = time
+        bid.processing_time = time
 
         event = Event(time=time, tag=EventTag.PROCESS, data=bid)
 
