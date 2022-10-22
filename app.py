@@ -2,7 +2,7 @@
 
 import logging
 import dearpygui.dearpygui as dpg
-from app_actions import add_row, start_auto_mode, start_step_mode
+from app_actions import make_step, start_auto_mode, start_step_mode
 
 
 from app_tags import *
@@ -34,6 +34,20 @@ with dpg.window(tag="primary-window"):
                        default_value=1,
                        min_value=1, max_value=20)
     dpg.add_separator()
+    dpg.add_slider_float(label="bid generation freq.",
+                         tag=SETTINGS_GENERATION_FREQ,
+                         default_value=0.1,
+                         min_value=0.1,
+                         max_value=1.0,
+                         format="{:.1f}")
+
+    dpg.add_slider_float(label="bid procession freq.",
+                         tag=SETTINGS_PROCESSION_FREQ,
+                         default_value=0.1,
+                         min_value=0.1,
+                         max_value=1.0,
+                         format="{:.1f}")
+    dpg.add_separator()
 
     with dpg.group(horizontal=True):
         dpg.add_button(label="start step mode", callback=start_step_mode)
@@ -44,7 +58,7 @@ with dpg.window(tag="primary-window"):
                     show=False,
                     width=300, height=300):
 
-        dpg.add_button(label="step", callback=add_row)
+        dpg.add_button(label="step", callback=make_step)
         dpg.add_group(tag=EVENT_CALENDAR_CONTENT_BLOCK)
 
     with dpg.window(label="Memory Buffer",

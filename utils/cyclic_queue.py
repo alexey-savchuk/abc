@@ -1,3 +1,4 @@
+from pickletools import read_unicodestring4, read_unicodestring8
 from typing import Generic, List, Tuple, TypeVar
 
 
@@ -5,50 +6,43 @@ T = TypeVar('T')
 
 class CyclicQueue(Generic[T]):
 
-  data: List[T]
-  capacity: int
+    def __init__(self, capacity: int) -> None:
+        if capacity < 1:
+            raise ValueError
 
-  def __init__(self, capacity: int) -> None:
-    if capacity <= 0:
-      raise ValueError
+        self.data: List[T] = []
+        self.capacity: int = capacity
 
-    self.data = []
-    self.capacity = capacity
+    def _rotate(self, n: int):
+        n = n % self.capacity
+        self.data = self.data[-n:] + self.data[:-n]
 
-  def _rotate(self, n: int):
-    n = n % self.capacity
-    self.data = self.data[-n:] + self.data[:-n]
+    def push_with_displace(self, x: T) -> T | None:
 
-  def _is_full(self) -> bool:
-    return len(self.data) == self.capacity
+        displaced = None
 
-  def push_with_displace(self, x: T) -> Tuple[bool, T]:
-    """Cyclic queue, element refused under pointer"""
+        if len(self.data) == self.capacity:
+            self._rotate(-1)
+            displaced = self.data.pop()
 
-    displaced = None
+        self.data.append(x)
 
-    if self._is_full():
-      self._rotate(-1)
-      displaced = self.data.pop()
+        return displaced
 
-    self.data.append(x)
+    def push(self, x: T) -> None:
+        self.push_with_displace(x)
 
-    return (displaced != None, displaced)
+    def pop(self, index: int = 0) -> T:
+        return self.data.pop(index)
 
-  def push(self, x: T) -> None:
-    self.push_with_displace(x)
+    def __len__(self) -> int:
+        return len(self.data)
 
-  def pop(self) -> None:
-    return self.data.pop(0)
+    def __str__(self) -> str:
+        return str(self.data)
 
-  def pick(self, filter) -> List[T]:
-    lst = [x for x in self.data if filter(x)]
-    self.data = [x for x in self.data if not filter(x)]
+    def __iter__(self):
+        return iter(self.data)
 
-    return lst
-
-  def __len__(self) -> int:
-    return len(self.data)
-
-  def __str__(self) -> str:
-    return str(self.data)
+    def __next__(self):
+        return next(self.data)

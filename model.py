@@ -2,38 +2,33 @@ import logging
 from typing import Iterable, List, Tuple
 from event import Event, EventTag
 from models.bid import Bid
+from models.buffer import Buffer
 
 from models.dispatchers import BufferingDispatcher, SelectingDispatcher
 from models.units import GeneratingUnit, ProcessingUnit
+from step_record import StepRecorder
 from timer import Timer
 
 
 class Supervisor:
 
-    generating_units: List[GeneratingUnit]
-    processing_units: List[ProcessingUnit]
-
-    buffering_dispatcher: BufferingDispatcher
-    selecting_dispatcher: SelectingDispatcher
-
-    events: List[Event]
-    timer: Timer
-
     def __init__(
         self,
         generating_units: List[GeneratingUnit],
         processing_units: List[ProcessingUnit],
+        buffer: Buffer,
         buffering_dispatcher: BufferingDispatcher,
         selecting_dispatcher: SelectingDispatcher
     ) -> None:
 
-        self.generating_units = generating_units
-        self.processing_units = processing_units
-        self.buffering_dispatcher = buffering_dispatcher
-        self.selecting_dispatcher = selecting_dispatcher
+        self.events: List[Event] = []
+        self.timer: Timer = Timer()
 
-        self.events = []
-        self.timer = Timer()
+        self.generating_units: List[GeneratingUnit] = generating_units
+        self.processing_units: List[ProcessingUnit] = processing_units
+        self.buffer: Buffer = buffer
+        self.buffering_dispatcher: BufferingDispatcher = buffering_dispatcher
+        self.selecting_dispatcher: SelectingDispatcher = selecting_dispatcher
 
   # Utils
     def _add_new_event(self, event: Event) -> None:
@@ -95,6 +90,10 @@ class Supervisor:
         self._add_new_event(new_event)
 
     def step(self) -> Tuple:
+        StepRecorder.pushed = None
+        StepRecorder.poped = None
+        StepRecorder.refused = None
+
         current_event = self._get_next_event()
         current_time = current_event.time
 
@@ -126,4 +125,4 @@ class Supervisor:
             case _:
                 raise ValueError("Supervisor met unknown event tag")
 
-        return current_time, current_event.tag.name, current_bid, self.buffering_dispatcher.memory.queue.data
+        return current_time, current_event.tag.name, current_bid, self.buffer, StepRecorder.pushed, StepRecorder.poped, StepRecorder.refused

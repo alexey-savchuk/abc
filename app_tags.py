@@ -2,6 +2,8 @@
 SETTINGS_NUM_SOURCES = "settings_num_sources"
 SETTINGS_NUM_DEVICES = "settings_num_devices"
 SETTINGS_BUFFER_CAPACITY = "setting_buffer_capacity"
+SETTINGS_GENERATION_FREQ = "settings_generation_freq"
+SETTINGS_PROCESSION_FREQ = "settings_procession_freq"
 
 EVENT_CALENDAR_WINDOW = "event_calendar_window"
 EVENT_CALENDAR_CONTENT_BLOCK = "event_calendar_content_block"

@@ -1,10 +1,11 @@
 import logging
-from typing import List, Tuple
+from typing import List
 
 from event import Event
 from models.bid import Bid
 from models.buffer import Buffer
 from models.units import ProcessingUnit
+from step_record import StepRecorder
 from timer import Timer
 
 
@@ -21,11 +22,13 @@ class BufferingDispatcher:
         bid.buffered = True
         bid.beffering_time = time
 
-        is_refused, refused_bid = self.memory.add_bid_with_displace(bid)
+        StepRecorder.pushed = bid
+        refused_bid = self.memory.push_with_displace(bid)
+        StepRecorder.refused = refused_bid
 
         logging.debug(f"Buffeting {bid}")
 
-        if is_refused:
+        if refused_bid:
             refused_bid.refused = True
             refused_bid.refusion_time = time
 
@@ -34,28 +37,37 @@ class BufferingDispatcher:
 
 class SelectingDispatcher:
 
-    processing_units: List[ProcessingUnit]
-    buffer: Buffer
-
-    target_id: int
-    bids_to_process: List[Bid]
-
     def __init__(self, processing_units: List[ProcessingUnit], buffer: Buffer) -> None:
 
-        self.timer = Timer()
+        self.timer: Timer = Timer()
 
-        self.processing_units = processing_units
-        self.buffer = buffer
+        self.processing_units: List[ProcessingUnit] = processing_units
+        self.buffer: Buffer = buffer
 
-        self.target_id = None
-        self.bids_to_process = []
+        self.target_id: int = None
 
-    def _get_bids(self, unit_id: int) -> None:
-        new_bids = self.buffer.pick_bids(unit_id)
-        self.bids_to_process += new_bids
+    def _get_new_bid(self) -> Bid:
+        new_bid = None
 
-    def _get_next_package(self) -> None:
-        self.target_id, self.bids_to_process = self.buffer.get_next_package()
+        for index, bid in enumerate(self.buffer):
+            if bid.generating_unit_id == self.target_id:
+                new_bid = self.buffer.queue.pop(index)
+                break
+
+        if not new_bid:
+            self._init_new_package()
+
+        for index, bid in enumerate(self.buffer):
+            if bid.generating_unit_id == self.target_id:
+                new_bid = self.buffer.queue.pop(index)
+                break
+
+        return new_bid
+
+    def _init_new_package(self) -> None:
+        ids = [bid.generating_unit_id for bid in self.buffer]
+        if ids:
+            self.target_id = min(ids)
 
     def _process(self, bid: Bid) -> Event:
 
@@ -71,21 +83,18 @@ class SelectingDispatcher:
 
         return False
 
-    def select(self) -> Event:
 
+    def select(self) -> Event | None:
         event = None
 
-        if self.target_id:
-            self._get_bids(self.target_id)
+        if not self._has_free_unit():
+            return None
 
-        if not self.bids_to_process:
-            self._get_next_package()
+        bid = self._get_new_bid()
+        StepRecorder.poped = bid
+        if bid:
+            event = self._process(bid)
 
-        if self.bids_to_process:
-            if self._has_free_unit():
-                bid = self.bids_to_process.pop(0)
-                event = self._process(bid)
-
-        logging.debug(f"select: {self.target_id}, {self.bids_to_process}")
+        logging.debug(f"select: target id = {self.target_id}")
 
         return event
