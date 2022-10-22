@@ -34,19 +34,21 @@ with dpg.window(tag="primary-window"):
                        default_value=1,
                        min_value=1, max_value=20)
     dpg.add_separator()
-    dpg.add_slider_float(label="bid generation freq.",
+    dpg.add_spacer()
+    dpg.add_separator()
+    dpg.add_slider_float(label="generation freq. [bid per time unit]",
                          tag=SETTINGS_GENERATION_FREQ,
                          default_value=0.1,
                          min_value=0.1,
                          max_value=1.0,
-                         format="{:.1f}")
+                         format="%.1f")
 
-    dpg.add_slider_float(label="bid procession freq.",
+    dpg.add_slider_float(label="procession freq. [bid per time unit]",
                          tag=SETTINGS_PROCESSION_FREQ,
                          default_value=0.1,
                          min_value=0.1,
                          max_value=1.0,
-                         format="{:.1f}")
+                         format="%.1f")
     dpg.add_separator()
 
     with dpg.group(horizontal=True):
