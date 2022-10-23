@@ -3,19 +3,19 @@ import logging
 from model.event import Event, EventTag
 from model.bid import Bid
 from model.timer import Timer
-from utils.random import RandomGenerator
+from utils.random import PoissonGenerator, UniformGenerator
 
 
 class GeneratingUnit:
     """TODO"""
 
-    def __init__(self, unit_id: int, generation_frequency: float) -> None:
+    def __init__(self, unit_id: int, generation_freq: float) -> None:
 
-        if generation_frequency <= 0:
-            raise ValueError("Generation frequency must be positive")
+        if generation_freq <= 0:
+            raise ValueError("generation frequency must be positive")
 
         self.timer = Timer()
-        self.generator = RandomGenerator(generation_frequency)
+        self.generator = PoissonGenerator(generation_freq)
 
         self.unit_id = unit_id
 
@@ -36,14 +36,14 @@ class GeneratingUnit:
 class ProcessingUnit:
     """TODO"""
 
-    def __init__(self, unit_id: int, processing_frequency: float) -> None:
+    def __init__(self, unit_id: int, min_proc_time: float, max_proc_time: float) -> None:
 
-        if processing_frequency <= 0:
-            raise ValueError("Processing frequency must be positive")
+        if min_proc_time >= max_proc_time:
+            raise ValueError("min. processing time must be less than max. processing time")
 
 
         self.timer = Timer()
-        self.generator = RandomGenerator(processing_frequency)
+        self.generator = UniformGenerator(min_proc_time, max_proc_time)
 
         self.unit_id = unit_id
         self.free = True

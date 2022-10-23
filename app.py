@@ -19,37 +19,51 @@ with dpg.window(tag="primary-window"):
     dpg.add_text("Simulation Settings")
 
     dpg.add_separator()
-    dpg.add_slider_int(label="num. of sources",
-                       tag=SETTINGS_NUM_SOURCES,
-                       default_value=1,
-                       min_value=1, max_value=20)
+    dpg.add_input_int(label="num. of sources",
+                      tag=SETTINGS_NUM_SOURCES,
+                      default_value=10,
+                      min_value=1, min_clamped=True,
+                      max_value=20, max_clamped=True)
 
-    dpg.add_slider_int(label="num. of devices",
-                       tag=SETTINGS_NUM_DEVICES,
-                       default_value=1,
-                       min_value=1, max_value=20)
-
-    dpg.add_slider_int(label="buffer capacity",
-                       tag=SETTINGS_BUFFER_CAPACITY,
-                       default_value=1,
-                       min_value=1, max_value=20)
+    dpg.add_input_int(label="num. of devices",
+                      tag=SETTINGS_NUM_DEVICES,
+                      default_value=10,
+                      min_value=1, min_clamped=True,
+                      max_value=20, max_clamped=True)
+    dpg.add_input_int(label="buffer capacity",
+                      tag=SETTINGS_BUFFER_CAPACITY,
+                      default_value=10,
+                      min_value=1, min_clamped=True,
+                      max_value=20, max_clamped=True)
     dpg.add_separator()
     dpg.add_spacer()
     dpg.add_separator()
-    dpg.add_slider_float(label="generation freq. [approx. bid per time]",
-                         tag=SETTINGS_GENERATION_FREQ,
-                         default_value=1.0,
-                         min_value=0.1,
-                         max_value=1.0,
-                         format="%.1f")
-
-    dpg.add_slider_float(label="processing freq. [approx. bid per time]",
-                         tag=SETTINGS_PROCESSING_FREQ,
-                         default_value=1.0,
-                         min_value=0.1,
-                         max_value=1.0,
-                         format="%.1f")
+    dpg.add_input_float(label="approx. generation freq.",
+                        tag=SETTINGS_GENERATION_FREQ,
+                        default_value=1.0,
+                        min_value=0.1, min_clamped=True,
+                        max_value=1.0, max_clamped=True,
+                        step=0.1, format="%.1f")
     dpg.add_separator()
+    dpg.add_spacer()
+    dpg.add_separator()
+    dpg.add_input_float(label="min. bid processing time",
+                        tag=SETTINGS_MIN_PROCESSING_TIME,
+                        default_value=20.0,
+                        min_value=1.0, min_clamped=True,
+                        max_value=100.0, max_clamped=True,
+                        step=0.1,
+                        format="%.1f")
+    dpg.add_input_float(label="max. bid processing time",
+                        tag=SETTINGS_MAX_PROCESSING_TIME,
+                        default_value=80.0,
+                        min_value=1.0, min_clamped=True,
+                        max_value=100.0, max_clamped=True,
+                        step=0.1, format="%.1f")
+    dpg.add_separator()
+
+    with dpg.window(label="Error", tag=ERROR_WINDOW, modal=True, show=False):
+        dpg.add_text(ERROR_DEFAULT_MESSAGE, tag=ERROR_MESSAGE)
 
     with dpg.group(horizontal=True):
         dpg.add_button(label="start step mode", callback=start_step_mode)

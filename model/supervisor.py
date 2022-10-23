@@ -15,19 +15,24 @@ from model.timer import Timer
 
 class Supervisor:
 
-    def __init__(self, num_generating_units: int, num_processing_untis: int, memory_buffer_capacity: int,
-                 generation_frequency: float, processing_frequency: float) -> None:
+    def __init__(self,
+                 num_sources: int,
+                 num_devices: int,
+                 buffer_capacity: int,
+                 generation_freq: float,
+                 min_proc_time: float,
+                 max_proc_time: float) -> None:
 
         self.events: List[Event] = []
         self.timer: Timer = Timer()
 
-        self.num_generating_units = num_generating_units
-        self.num_processing_units = num_processing_untis
+        self.num_generating_units = num_sources
+        self.num_processing_units = num_devices
 
-        self.generating_units = [GeneratingUnit(i + 1, generation_frequency) for i in range(num_generating_units)]
-        self.processing_units = [ProcessingUnit(i + 1, processing_frequency) for i in range(num_processing_untis)]
+        self.generating_units = [GeneratingUnit(i + 1, generation_freq) for i in range(num_sources)]
+        self.processing_units = [ProcessingUnit(i + 1, min_proc_time, max_proc_time) for i in range(num_devices)]
 
-        self.memory_buffer = Buffer(memory_buffer_capacity)
+        self.memory_buffer = Buffer(buffer_capacity)
 
         self.buffering_dispatcher = BufferingDispatcher(self.memory_buffer)
         self.selecting_dispatcher = SelectingDispatcher(self.processing_units, self.memory_buffer)
@@ -59,7 +64,8 @@ class Supervisor:
         self._add_new_events(new_events)
 
     def _trigger_generating_unit(self, unit_id: int) -> None:
-        new_events = [unit.generate() for unit in self.generating_units if unit.unit_id == unit_id]
+        new_events = [unit.generate()
+                      for unit in self.generating_units if unit.unit_id == unit_id]
         self._add_new_events(new_events)
 
     def _trigger_processing_unit(self, unit_id: int) -> None:
@@ -109,7 +115,8 @@ class Supervisor:
         StepRecorder.refused_bid = None
 
         logging.info(f"{current_time:.2f}: processing {current_event}")
-        logging.info(f"{current_time:.2f}: current buffer {[bid for bid in self.memory_buffer]}")
+        logging.info(
+            f"{current_time:.2f}: current buffer {[bid for bid in self.memory_buffer]}")
 
         match current_event.tag:
             case EventTag.START:

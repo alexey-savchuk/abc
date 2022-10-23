@@ -3,4 +3,5 @@ class Settings:
     num_devices: int
     buffer_capacity: int
     generation_freq: float
-    processing_freq: float
+    min_processing_time: float
+    max_processing_time: float
