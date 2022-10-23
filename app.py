@@ -74,6 +74,8 @@ with dpg.window(tag="primary-window"):
     with dpg.window(label="Error", tag=ERROR_WINDOW, modal=True, show=False):
         dpg.add_text(ERROR_DEFAULT_MESSAGE, tag=ERROR_MESSAGE)
 
+
+    dpg.add_spacer()
     with dpg.group(horizontal=True):
         dpg.add_button(label="start step mode", callback=start_step_mode)
         dpg.add_button(label="start auto mode", callback=start_auto_mode)

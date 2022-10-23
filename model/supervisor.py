@@ -59,6 +59,7 @@ class Supervisor:
 
     # Step mode actions
     def _start_modeling(self) -> None:
+        self.timer.current_time = 0
         self.current_num_bids = 0
         time = self.timer.get_current_time()
         tag = EventTag.START
@@ -69,7 +70,7 @@ class Supervisor:
         new_events = []
 
         for unit in self.generating_units:
-            if self.current_num_bids == self.num_total_bids:
+            if self.current_num_bids > self.num_total_bids:
                 break
 
             event = unit.generate()
@@ -82,7 +83,7 @@ class Supervisor:
     def _trigger_generating_unit(self, unit_id: int) -> None:
 
         for unit in self.generating_units:
-            if self.current_num_bids == self.num_total_bids:
+            if self.current_num_bids > self.num_total_bids:
                 break
 
             if unit.unit_id == unit_id:
@@ -181,118 +182,95 @@ class Supervisor:
                 StepRecorder.refused_bid)
 
     # Auto mode utils
-    def _get_next_approx(self, p_prev: float, N_prev: int) -> float:
-
-        # { unit_id: bids_in_system }
-        stats = {i + 1: [] for i in range(self.num_generating_units)}
-
-        self.start_step_mode()
-
-        i = 0
-        while True:
-            is_done = True
-            self.step()
-            _, event_type, bid = self.get_event_info()
-
-            if event_type == EventTag.GENERATE.name:
-                unit_id = bid.generating_unit_id
-                stats[unit_id].append(bid)
-                i += 1
-
-            for _, bids in stats.items():
-                if not bids:
-                    is_done = False
-
-            if is_done and i > N_prev:
-                break
-
-        while True:
-            is_done = True
-            self.step()
-
-            for bids in stats.values():
-                for bid in bids:
-                    if not bid.processing_unit_id and not bid.is_refused:
-                        is_done = False
-
-            if is_done:
-                break
-
-        self.end_step_mode()
-        self.step()
-
-        probabilities = {i + 1: 0 for i in range(self.num_generating_units)}
-
-        for unit_id, bids in stats.items():
-
-            total_num = len(bids)
-            num_refused = 0
-
-            for bid in bids:
-
-                if bid.is_refused:
-                    num_refused += 1
-
-            probabilities[unit_id] = num_refused / total_num
-
-        for i, x in probabilities.items():
-            print(f"{i}: {x:.2f}")
-
-        p_next = max(probabilities.values(), key=lambda p: math.fabs(p_prev - p))
-
-        return p_next
-
-    def _get_proper_num_bids(self) -> int:
-
-        t_a = 1.643
-        d = 0.1
-
-        p_prev = 2
-        print(f"p_prev = {p_prev}")
-        N_prev = 100
-        print(f"N_prev = {N_prev}")
-
-        p_next = self._get_next_approx(p_prev, N_prev)
-        print(f"p_next = {p_next}")
-        N_next = (math.pow(t_a, 2) * (1 - p_next)) / (p_next * math.pow(d, 2))
-        print(f"N_next = {N_next}")
-
-        while math.fabs(p_next - p_prev) > 0.1:
-
-            p_prev = p_next
-            print(f"p_prev = {p_prev}")
-            p_next = self._get_next_approx(p_next, N_next)
-
-            N_prev = N_next
-            print(f"N_prev = {N_prev}")
-            N_next = (math.pow(t_a, 2) * (1 - p_next)) / (p_next * math.pow(d))
-            print(f"N_next = {N_next}")
-
-        return N_next
 
     # Auto mode
     def start_auto_mode(self):
 
-        map = {i + 1: [] for i in range(self.num_generating_units)}
-        num_refused = 0
-        num_processed = 0
+        stats = {i + 1: [] for i in range(self.num_generating_units)}
+        probs = {i + 1: 1 for i in range(self.num_generating_units)}
+        delta = {i + 1: 1 for i in range(self.num_generating_units)}
 
-        print(self._get_proper_num_bids())
+        times = {i + 1: [0, 0, 0] for i in range(self.num_generating_units)}
 
-        # self.start_step_mode()
+        N = 100
 
-        # bids = []
-        # for i in range(10000):
-        #     self.step()
+        cond = 1
+        max_iteration = 200
+        num_iteration = 0
+        while cond > 0.1 and num_iteration < max_iteration:
 
-        #     _, event_type, bid = self.get_event_info()
+            num_iteration += 1
 
-        #     if event_type == EventTag.GENERATE.name:
-        #         bids.append(bid)
+            self.num_total_bids = N
+            self.start_step_mode()
+            self.step()
 
-        # self.end_step_mode()
+            _, event_type, bid = self.get_event_info()
+            while event_type != EventTag.END.name:
 
-        # for bid in bids:
-            # print(bid)
+                if event_type == EventTag.GENERATE.name:
+                    unit_id = bid.generating_unit_id
+                    stats[unit_id].append(bid)
+
+                self.step()
+                _, event_type, bid = self.get_event_info()
+
+
+            # for id, bids in stats.items():
+            #     print(id)
+            #     for bid in bids:
+            #         print(bid)
+
+            for unit_id, bids in stats.items():
+                num_total = len(bids)
+                num_refused = 0
+
+                for bid in bids:
+                    if bid.is_refused:
+                        num_refused += 1
+                    else:
+                        time_delta = bid.processing_time - bid.generation_time
+                        times[unit_id][0] += 1
+                        times[unit_id][1] += math.pow(time_delta, 2)
+                        times[unit_id][2] += time_delta
+
+
+                if num_total:
+                    delta[unit_id] = math.fabs(probs[unit_id] - num_refused / num_total)
+                    probs[unit_id] = num_refused / num_total
+
+            max = 0
+            id = 0
+            for i, d in delta.items():
+                if d > max and d != 1:
+                    id = i
+                    max = d
+
+            if max > 0:
+                N = (math.pow(1.643, 2) * (1 - probs[id])) / (probs[id] * 0.01)
+            else:
+                max = 1
+
+            print("max = ", max)
+            print("N = ", N)
+
+            print("probs")
+            for id, p in probs.items():
+                print(id, p)
+
+            print("delta")
+            for id, p in delta.items():
+                print(id, p)
+
+            cond = max
+
+
+        for unit_id, tim in times.items():
+            mean1 = tim[1] / tim[0]
+            mean2 = tim[2] / tim[0]
+
+            variance = mean1 - mean2 * mean2
+
+            print("id = ", unit_id, ", mean = ", mean2, ", var = ", variance)
 
         return "Done"
