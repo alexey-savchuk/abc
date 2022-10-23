@@ -46,3 +46,6 @@ class CyclicQueue(Generic[T]):
 
     def __next__(self):
         return next(self.data)
+
+    def make_empty(self):
+        self.data = []

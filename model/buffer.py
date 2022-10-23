@@ -23,3 +23,7 @@ class Buffer:
 
     def __next__(self):
         return next(self.queue)
+
+    def make_empty(self):
+        self.queue.make_empty()
+

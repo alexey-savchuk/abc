@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import logging
 import math
-import statistics
 from typing import Iterable, List, Tuple
+from model.auto_mode import StatsRecord
 
 
 from model.event import Event, EventTag
@@ -61,6 +61,8 @@ class Supervisor:
     def _start_modeling(self) -> None:
         self.timer.current_time = 0
         self.current_num_bids = 0
+        self.memory_buffer.make_empty()
+        self.events = []
         time = self.timer.get_current_time()
         tag = EventTag.START
         new_event = Event(time, tag)
@@ -186,91 +188,168 @@ class Supervisor:
     # Auto mode
     def start_auto_mode(self):
 
-        stats = {i + 1: [] for i in range(self.num_generating_units)}
-        probs = {i + 1: 1 for i in range(self.num_generating_units)}
-        delta = {i + 1: 1 for i in range(self.num_generating_units)}
+        @dataclass
+        class SpecialStatsRecord:
+            num_total_bids: int = 0
+            num_refused_bids: int = 0
 
-        times = {i + 1: [0, 0, 0] for i in range(self.num_generating_units)}
+        simulation_total_time = 0
+
+        shared_stats = {i + 1: StatsRecord() for i in range(self.num_generating_units)}
+        devices_stats = {i + 1: 0 for i in range(self.num_processing_units)}
+
+        probabilities = {i + 1: 1 for i in range(self.num_generating_units)}
+        deltas = {i + 1: 1 for i in range(self.num_generating_units)}
 
         N = 100
+
+        ill_state = False
 
         cond = 1
         max_iteration = 200
         num_iteration = 0
-        while cond > 0.1 and num_iteration < max_iteration:
+        while cond > 0.1:
 
             num_iteration += 1
+            special_stats = {i + 1: SpecialStatsRecord() for i in range(self.num_generating_units)}
+
+            if num_iteration > max_iteration:
+                ill_state = True
+                break
+
+            if N < 100:
+                ill_state = True
+                break
 
             self.num_total_bids = N
             self.start_step_mode()
-            self.step()
 
-            _, event_type, bid = self.get_event_info()
+            self.step()
+            time, event_type, bid = self.get_event_info()
+            _, _, _, refused_bid = self.get_buffer_info()
+
             while event_type != EventTag.END.name:
+
+                # print("iter: ", event_type, bid)
 
                 if event_type == EventTag.GENERATE.name:
                     unit_id = bid.generating_unit_id
-                    stats[unit_id].append(bid)
+                    special_stats[unit_id].num_total_bids += 1
+
+                    if unit_id == 20:
+                        print(bid, special_stats[unit_id].num_total_bids)
+
+                    # print(unit_id)
+                    if unit_id == 20:
+                        print("Generated bid: ", bid)
+
+                if event_type == EventTag.PROCESS.name:
+                    unit_id = bid.generating_unit_id
+
+                    shared_stats[unit_id].num_total_bids += 1
+
+                    waiting_time = bid.selection_time - bid.generation_time
+                    shared_stats[unit_id].sum_waiting_time += waiting_time
+                    shared_stats[unit_id].sum_sqr_waiting_time += math.pow(waiting_time, 2)
+
+                    processing_time = bid.processing_time - bid.selection_time
+                    shared_stats[unit_id].sum_processing_time += processing_time
+                    shared_stats[unit_id].sum_sqr_processing_time += math.pow(processing_time, 2)
+
+                    devices_stats[unit_id] += processing_time
+
+                if refused_bid:
+                    unit_id = refused_bid.generating_unit_id
+
+                    special_stats[unit_id].num_refused_bids += 1
+                    shared_stats[unit_id].num_refused_bids += 1
+
+                    # print(unit_id)
+                    if unit_id == 20:
+                        print("Refused bid: ", refused_bid)
 
                 self.step()
-                _, event_type, bid = self.get_event_info()
+                time, event_type, bid = self.get_event_info()
+                _, _, _, refused_bid = self.get_buffer_info()
 
+            simulation_total_time += time
 
-            # for id, bids in stats.items():
-            #     print(id)
-            #     for bid in bids:
-            #         print(bid)
+            for unit_id, record in special_stats.items():
 
-            for unit_id, bids in stats.items():
-                num_total = len(bids)
-                num_refused = 0
+                print("refused = ", record.num_refused_bids)
+                print("total = ", record.num_total_bids)
 
-                for bid in bids:
-                    if bid.is_refused:
-                        num_refused += 1
-                    else:
-                        time_delta = bid.processing_time - bid.generation_time
-                        times[unit_id][0] += 1
-                        times[unit_id][1] += math.pow(time_delta, 2)
-                        times[unit_id][2] += time_delta
+                if record.num_total_bids:
+                    probability = record.num_refused_bids / record.num_total_bids
 
+                    deltas[unit_id] = math.fabs(probabilities[unit_id] - probability)
+                    probabilities[unit_id] = probability
 
-                if num_total:
-                    delta[unit_id] = math.fabs(probs[unit_id] - num_refused / num_total)
-                    probs[unit_id] = num_refused / num_total
+            max_delta = 0
+            unit_id = 0
+            for id, delta in deltas.items():
+                probability = probabilities[id]
 
-            max = 0
-            id = 0
-            for i, d in delta.items():
-                if d > max and d != 1:
-                    id = i
-                    max = d
-
-            if max > 0:
-                N = (math.pow(1.643, 2) * (1 - probs[id])) / (probs[id] * 0.01)
-            else:
-                max = 1
-
-            print("max = ", max)
-            print("N = ", N)
+                if 0 < probability and probability < 1:
+                    if delta > max_delta:
+                        unit_id = id
+                        max_delta = delta
 
             print("probs")
-            for id, p in probs.items():
-                print(id, p)
+            for unit_id, p in probabilities.items():
+                print(unit_id, p)
 
             print("delta")
-            for id, p in delta.items():
-                print(id, p)
+            for unit_id, p in deltas.items():
+                print(unit_id, p)
 
-            cond = max
+            print(max_delta, probabilities[unit_id])
+
+            if unit_id > 0:
+                t_a = 1.643
+                d = 0.1
+
+                N = (math.pow(t_a, 2) * (1 - probabilities[unit_id])) / (probabilities[unit_id] * math.pow(d, 2))
+            else:
+                max_delta = 1
+
+            print("max = ", max_delta)
+            print("N = ", N)
+
+            cond = max_delta
 
 
-        for unit_id, tim in times.items():
-            mean1 = tim[1] / tim[0]
-            mean2 = tim[2] / tim[0]
+        if ill_state:
+            for record in shared_stats.values():
+                record.probability = None
+        else:
+            for unit_id, probability in probabilities.items():
+                shared_stats[unit_id].probability = probability
 
-            variance = mean1 - mean2 * mean2
+        for unit_id, record in shared_stats.items():
+            print(unit_id, record)
 
-            print("id = ", unit_id, ", mean = ", mean2, ", var = ", variance)
+            waiting_mean = None
+            waiting_variance = None
+            processing_mean = None
+            processing_variance = None
 
-        return "Done"
+            if record.num_total_bids:
+                waiting_mean = record.sum_waiting_time / record.num_total_bids
+                waiting_mean_sqr = record.sum_sqr_processing_time / record.num_total_bids
+                waiting_variance = waiting_mean_sqr - math.pow(waiting_mean, 2)
+
+                processing_mean = record.sum_processing_time / record.num_total_bids
+                processing_mean_sqr = record.sum_sqr_processing_time / record.num_total_bids
+                processing_variance = processing_mean_sqr - math.pow(processing_mean, 2)
+
+            print("waiting mean = ", waiting_mean)
+            print("waiting variance = ", waiting_variance)
+
+            print("processing mean = ", processing_mean)
+            print("processing variance = ", processing_variance)
+
+        for unit_id in devices_stats.keys():
+            devices_stats[unit_id] /= simulation_total_time
+
+        return (shared_stats, devices_stats)

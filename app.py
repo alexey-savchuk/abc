@@ -106,6 +106,13 @@ with dpg.window(tag="primary-window"):
 
         dpg.add_group(tag=SUMMARY_TABLE_CONTENT_BLOCK)
 
+    with dpg.window(label="Device Usage",
+                    tag=DEVICE_USAGE_TABLE_WINDOW,
+                    show=False,
+                    width=300, height=300):
+
+        dpg.add_group(tag=DEVICE_USAGE_TABLE_CONTENT_BLOCK)
+
 
 dpg.set_primary_window(window="primary-window", value=True)
 

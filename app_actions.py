@@ -1,9 +1,12 @@
-from typing import Iterable
+import math
+from typing import Dict, Iterable
 
 import dearpygui.dearpygui as dpg
+from numpy import int16
 
 from app_tags import *
 from app_settings import *
+from model.auto_mode import StatsRecord
 
 from model.bid import Bid
 from model.supervisor import Supervisor
@@ -170,6 +173,104 @@ def stop_action(sender, app_data) -> None:
     dpg.configure_item(item=STOP_BUTTON, enabled=False)
 
 
+def _draw_summary_table_content_block() -> None:
+
+    dpg.delete_item(item=SUMMARY_TABLE_CONTENT_BLOCK, children_only=True)
+
+    with dpg.table(tag=SUMMARY_TABLE, parent=SUMMARY_TABLE_CONTENT_BLOCK,
+                   header_row=True, policy=dpg.mvTable_SizingStretchProp,
+                   borders_outerH=True, borders_innerV=True, borders_innerH=True, borders_outerV=True,
+                   row_background=True, scrollY=True, no_host_extendX=True):
+        dpg.add_table_column(label="source", parent=SUMMARY_TABLE)
+        dpg.add_table_column(label="num. bids", parent=SUMMARY_TABLE)
+        dpg.add_table_column(label="P", parent=SUMMARY_TABLE)
+        dpg.add_table_column(label="E[WT]", parent=SUMMARY_TABLE)
+        dpg.add_table_column(label="E[PT]", parent=SUMMARY_TABLE)
+        dpg.add_table_column(label="E[TT]", parent=SUMMARY_TABLE)
+        dpg.add_table_column(label="V[WT]", parent=SUMMARY_TABLE)
+        dpg.add_table_column(label="V[PT]", parent=SUMMARY_TABLE)
+
+def _draw_summary_table(stats: Dict[int, StatsRecord]) -> None:
+
+    dpg.delete_item(item=SUMMARY_TABLE, children_only=True)
+
+    dpg.add_table_column(label="source", parent=SUMMARY_TABLE)
+    dpg.add_table_column(label="num. bids", parent=SUMMARY_TABLE)
+    dpg.add_table_column(label="P", parent=SUMMARY_TABLE)
+    dpg.add_table_column(label="E[WT]", parent=SUMMARY_TABLE)
+    dpg.add_table_column(label="E[PT]", parent=SUMMARY_TABLE)
+    dpg.add_table_column(label="E[TT]", parent=SUMMARY_TABLE)
+    dpg.add_table_column(label="V[WT]", parent=SUMMARY_TABLE)
+    dpg.add_table_column(label="V[PT]", parent=SUMMARY_TABLE)
+
+    for unit_id, record in stats.items():
+        with dpg.table_row(parent=SUMMARY_TABLE):
+            dpg.add_text(unit_id)
+            dpg.add_text(record.num_total_bids)
+
+            if record.probability != None:
+                dpg.add_text(f"{record.probability:.5f}")
+            else:
+                dpg.add_text(record.probability)
+
+            waiting_mean = None
+            waiting_variance = None
+            processing_mean = None
+            processing_variance = None
+
+            if record.num_total_bids:
+                waiting_mean = record.sum_waiting_time / record.num_total_bids
+                waiting_mean_sqr = record.sum_sqr_processing_time / record.num_total_bids
+                waiting_variance = waiting_mean_sqr - math.pow(waiting_mean, 2)
+
+                processing_mean = record.sum_processing_time / record.num_total_bids
+                processing_mean_sqr = record.sum_sqr_processing_time / record.num_total_bids
+                processing_variance = processing_mean_sqr - math.pow(processing_mean, 2)
+
+            if waiting_mean != None:
+                dpg.add_text(f"{waiting_mean:.2f}")
+            else:
+                dpg.add_text(waiting_mean)
+            if processing_mean != None:
+                dpg.add_text(f"{processing_mean:.2f}")
+            else:
+                dpg.add_text(processing_mean)
+            if waiting_mean != None and processing_mean != None:
+                dpg.add_text(f"{waiting_mean + processing_mean:.2f}")
+            else:
+                dpg.add_text(None)
+            if waiting_variance != None:
+                dpg.add_text(f"{waiting_variance:.2f}")
+            else:
+                dpg.add_text(waiting_variance)
+            if processing_variance != None:
+                dpg.add_text(f"{processing_variance:.2f}")
+            else:
+                dpg.add_text(processing_variance)
+
+def _draw_device_usage_table_content_block() -> None:
+
+    dpg.delete_item(item=DEVICE_USAGE_TABLE_CONTENT_BLOCK, children_only=True)
+
+    with dpg.table(tag=DEVICE_USAGE_TABLE, parent=DEVICE_USAGE_TABLE_CONTENT_BLOCK,
+                   header_row=True, policy=dpg.mvTable_SizingStretchProp,
+                   borders_outerH=True, borders_innerV=True, borders_innerH=True, borders_outerV=True,
+                   row_background=True, scrollY=True, no_host_extendX=True):
+        dpg.add_table_column(label="device", parent=DEVICE_USAGE_TABLE)
+        dpg.add_table_column(label="K", parent=DEVICE_USAGE_TABLE)
+
+def _draw_device_usage_table(stats: Dict[int, float]) -> None:
+
+    dpg.delete_item(item=DEVICE_USAGE_TABLE, children_only=True)
+
+    dpg.add_table_column(label="device", parent=DEVICE_USAGE_TABLE)
+    dpg.add_table_column(label="K", parent=DEVICE_USAGE_TABLE)
+
+    for unit_id, K in stats.items():
+        with dpg.table_row(parent=DEVICE_USAGE_TABLE):
+            dpg.add_text(unit_id)
+            dpg.add_text(K)
+
 def start_auto_mode(sender, app_data) -> None:
 
     try:
@@ -183,16 +284,22 @@ def start_auto_mode(sender, app_data) -> None:
         dpg.configure_item(item=ERROR_WINDOW, show=True)
         return
 
-    dpg.delete_item(item=SUMMARY_TABLE_CONTENT_BLOCK, children_only=True)
+    _draw_summary_table_content_block()
+    _draw_device_usage_table_content_block()
 
-    dpg.add_text("processing...", tag="dummy_text", parent=SUMMARY_TABLE_CONTENT_BLOCK)
+    dpg.add_text("processing...", tag="dummy_text1", parent=SUMMARY_TABLE_CONTENT_BLOCK, before=SUMMARY_TABLE)
+    dpg.add_text("processing...", tag="dummy_text2", parent=DEVICE_USAGE_TABLE_CONTENT_BLOCK, before=DEVICE_USAGE_TABLE)
+
     dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=True)
+    dpg.configure_item(item=DEVICE_USAGE_TABLE_WINDOW, show=True)
 
     global supervisor
     supervisor = _get_supervisor()
 
+    stats, device_stats = supervisor.start_auto_mode()
 
-    response = supervisor.start_auto_mode()
+    dpg.delete_item(item="dummy_text1")
+    dpg.delete_item(item="dummy_text2")
+    _draw_summary_table(stats)
+    _draw_device_usage_table(device_stats)
 
-    dpg.delete_item(item="dummy_text")
-    dpg.add_text(response, parent=SUMMARY_TABLE_CONTENT_BLOCK)

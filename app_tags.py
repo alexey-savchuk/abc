@@ -24,3 +24,7 @@ MEMORY_BUFFER = "memory_buffer"
 SUMMARY_TABLE_WINDOW = "summary_table_window"
 SUMMARY_TABLE_CONTENT_BLOCK = "summary_table_content_block"
 SUMMARY_TABLE = "summary_table"
+
+DEVICE_USAGE_TABLE_WINDOW = "device_usage_table_window"
+DEVICE_USAGE_TABLE_CONTENT_BLOCK = "device_usage_table_content_block"
+DEVICE_USAGE_TABLE = "device_usage_table"
