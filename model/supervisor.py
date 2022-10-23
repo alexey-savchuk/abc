@@ -198,8 +198,8 @@ class Supervisor:
         shared_stats = {i + 1: StatsRecord() for i in range(self.num_generating_units)}
         devices_stats = {i + 1: 0 for i in range(self.num_processing_units)}
 
-        probabilities = {i + 1: 1 for i in range(self.num_generating_units)}
-        deltas = {i + 1: 1 for i in range(self.num_generating_units)}
+        p_prev = 1
+        p_next = 1
 
         N = 100
 
@@ -211,15 +211,15 @@ class Supervisor:
         while cond > 0.1:
 
             num_iteration += 1
-            special_stats = {i + 1: SpecialStatsRecord() for i in range(self.num_generating_units)}
+            special_stats = SpecialStatsRecord()
 
             if num_iteration > max_iteration:
                 ill_state = True
                 break
 
-            if N < 100:
-                ill_state = True
-                break
+            # if N < 100:
+                # ill_state = True
+                # break
 
             self.num_total_bids = N
             self.start_step_mode()
@@ -234,19 +234,14 @@ class Supervisor:
 
                 if event_type == EventTag.GENERATE.name:
                     unit_id = bid.generating_unit_id
-                    special_stats[unit_id].num_total_bids += 1
+                    special_stats.num_total_bids += 1
 
-                    if unit_id == 20:
-                        print(bid, special_stats[unit_id].num_total_bids)
-
-                    # print(unit_id)
-                    if unit_id == 20:
-                        print("Generated bid: ", bid)
+                    shared_stats[unit_id].num_total_bids += 1
 
                 if event_type == EventTag.PROCESS.name:
                     unit_id = bid.generating_unit_id
 
-                    shared_stats[unit_id].num_total_bids += 1
+                    shared_stats[unit_id].num_processed_bids += 1
 
                     waiting_time = bid.selection_time - bid.generation_time
                     shared_stats[unit_id].sum_waiting_time += waiting_time
@@ -256,17 +251,13 @@ class Supervisor:
                     shared_stats[unit_id].sum_processing_time += processing_time
                     shared_stats[unit_id].sum_sqr_processing_time += math.pow(processing_time, 2)
 
-                    devices_stats[unit_id] += processing_time
+                    devices_stats[bid.processing_unit_id] += processing_time
 
                 if refused_bid:
                     unit_id = refused_bid.generating_unit_id
 
-                    special_stats[unit_id].num_refused_bids += 1
+                    special_stats.num_refused_bids += 1
                     shared_stats[unit_id].num_refused_bids += 1
-
-                    # print(unit_id)
-                    if unit_id == 20:
-                        print("Refused bid: ", refused_bid)
 
                 self.step()
                 time, event_type, bid = self.get_event_info()
@@ -274,57 +265,24 @@ class Supervisor:
 
             simulation_total_time += time
 
-            for unit_id, record in special_stats.items():
 
-                print("refused = ", record.num_refused_bids)
-                print("total = ", record.num_total_bids)
+            p_next = special_stats.num_refused_bids / special_stats.num_total_bids
 
-                if record.num_total_bids:
-                    probability = record.num_refused_bids / record.num_total_bids
-
-                    deltas[unit_id] = math.fabs(probabilities[unit_id] - probability)
-                    probabilities[unit_id] = probability
-
-            max_delta = 0
-            unit_id = 0
-            for id, delta in deltas.items():
-                probability = probabilities[id]
-
-                if 0 < probability and probability < 1:
-                    if delta > max_delta:
-                        unit_id = id
-                        max_delta = delta
-
-            print("probs")
-            for unit_id, p in probabilities.items():
-                print(unit_id, p)
-
-            print("delta")
-            for unit_id, p in deltas.items():
-                print(unit_id, p)
-
-            print(max_delta, probabilities[unit_id])
-
-            if unit_id > 0:
+            if p_next != 0:
                 t_a = 1.643
                 d = 0.1
+                N = (math.pow(t_a, 2) * (1 - p_next)) / (p_next * math.pow(d, 2))
 
-                N = (math.pow(t_a, 2) * (1 - probabilities[unit_id])) / (probabilities[unit_id] * math.pow(d, 2))
-            else:
-                max_delta = 1
-
-            print("max = ", max_delta)
             print("N = ", N)
 
-            cond = max_delta
+            cond = p_next - p_prev
+
+            p_prev = p_next
 
 
         if ill_state:
             for record in shared_stats.values():
                 record.probability = None
-        else:
-            for unit_id, probability in probabilities.items():
-                shared_stats[unit_id].probability = probability
 
         for unit_id, record in shared_stats.items():
             print(unit_id, record)
@@ -334,13 +292,13 @@ class Supervisor:
             processing_mean = None
             processing_variance = None
 
-            if record.num_total_bids:
-                waiting_mean = record.sum_waiting_time / record.num_total_bids
-                waiting_mean_sqr = record.sum_sqr_processing_time / record.num_total_bids
+            if record.num_processed_bids:
+                waiting_mean = record.sum_waiting_time / record.num_processed_bids
+                waiting_mean_sqr = record.sum_sqr_processing_time / record.num_processed_bids
                 waiting_variance = waiting_mean_sqr - math.pow(waiting_mean, 2)
 
-                processing_mean = record.sum_processing_time / record.num_total_bids
-                processing_mean_sqr = record.sum_sqr_processing_time / record.num_total_bids
+                processing_mean = record.sum_processing_time / record.num_processed_bids
+                processing_mean_sqr = record.sum_sqr_processing_time / record.num_processed_bids
                 processing_variance = processing_mean_sqr - math.pow(processing_mean, 2)
 
             print("waiting mean = ", waiting_mean)

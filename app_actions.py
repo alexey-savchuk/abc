@@ -206,25 +206,25 @@ def _draw_summary_table(stats: Dict[int, StatsRecord]) -> None:
     for unit_id, record in stats.items():
         with dpg.table_row(parent=SUMMARY_TABLE):
             dpg.add_text(unit_id)
-            dpg.add_text(record.num_total_bids)
+            dpg.add_text(record.num_processed_bids)
 
-            if record.probability != None:
-                dpg.add_text(f"{record.probability:.5f}")
+            if record.num_processed_bids:
+                dpg.add_text(f"{record.num_refused_bids / record.num_total_bids:.5f}")
             else:
-                dpg.add_text(record.probability)
+                dpg.add_text(None)
 
             waiting_mean = None
             waiting_variance = None
             processing_mean = None
             processing_variance = None
 
-            if record.num_total_bids:
-                waiting_mean = record.sum_waiting_time / record.num_total_bids
-                waiting_mean_sqr = record.sum_sqr_processing_time / record.num_total_bids
+            if record.num_processed_bids:
+                waiting_mean = record.sum_waiting_time / record.num_processed_bids
+                waiting_mean_sqr = record.sum_sqr_processing_time / record.num_processed_bids
                 waiting_variance = waiting_mean_sqr - math.pow(waiting_mean, 2)
 
-                processing_mean = record.sum_processing_time / record.num_total_bids
-                processing_mean_sqr = record.sum_sqr_processing_time / record.num_total_bids
+                processing_mean = record.sum_processing_time / record.num_processed_bids
+                processing_mean_sqr = record.sum_sqr_processing_time / record.num_processed_bids
                 processing_variance = processing_mean_sqr - math.pow(processing_mean, 2)
 
             if waiting_mean != None:
