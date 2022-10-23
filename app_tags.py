@@ -5,6 +5,7 @@ SETTINGS_BUFFER_CAPACITY = "setting_buffer_capacity"
 SETTINGS_GENERATION_FREQ = "settings_generation_freq"
 SETTINGS_MIN_PROCESSING_TIME = "settings_min_processing_time"
 SETTINGS_MAX_PROCESSING_TIME = "settings_max_processing_time"
+SETTINGS_MAX_BIDS = "settings_max_bids"
 
 ERROR_WINDOW = "error_window"
 ERROR_MESSAGE = "error_message"

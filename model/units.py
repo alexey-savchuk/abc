@@ -2,6 +2,7 @@ import logging
 
 from model.event import Event, EventTag
 from model.bid import Bid
+from model.marker import Marker
 from model.timer import Timer
 from utils.random import PoissonGenerator, UniformGenerator
 
@@ -24,7 +25,7 @@ class GeneratingUnit:
         current_time = self.timer.get_current_time()
         time = current_time + self.generator()
 
-        bid = Bid(generating_unit_id=self.unit_id, generation_time=time)
+        bid = Bid(id=Marker().get_id(), generating_unit_id=self.unit_id, generation_time=time)
 
         event = Event(time, tag=EventTag.GENERATE, data=bid)
 
@@ -38,7 +39,7 @@ class ProcessingUnit:
 
     def __init__(self, unit_id: int, min_proc_time: float, max_proc_time: float) -> None:
 
-        if min_proc_time >= max_proc_time:
+        if min_proc_time > max_proc_time:
             raise ValueError("min. processing time must be less than max. processing time")
 
 
@@ -51,8 +52,8 @@ class ProcessingUnit:
     def is_free(self) -> bool:
         return self.free
 
-    def change_state(self) -> None:
-        self.free = not self.free
+    def make_free(self) -> None:
+        self.free = True
 
     def process(self, bid: Bid) -> Event:
 

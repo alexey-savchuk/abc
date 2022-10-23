@@ -9,24 +9,57 @@ from model.step_record import StepRecorder
 from model.timer import Timer
 
 
-class BufferingDispatcher:
+target_id = None
 
-    def __init__(self, buffer: Buffer) -> None:
+class ProcessingDispatcher:
+
+    def __init__(self, processing_units: List[ProcessingUnit], buffer: Buffer) -> None:
 
         self.timer = Timer()
-        self.memory = buffer
 
-    def buffer(self, bid: Bid):
+        self.processing_units = processing_units
+        self.buffer = buffer
 
-        StepRecorder.pushed_bid = bid
-        refused_bid = self.memory.push_with_displace(bid)
-        StepRecorder.refused_bid = refused_bid
+    def _has_free_unit(self) -> bool:
+        for unit in self.processing_units:
+            if unit.is_free():
+                return True
+
+        return False
+
+    def _buffer(self, bid: Bid) -> None:
+        refused_bid = self.buffer.push_with_displace(bid)
 
         if refused_bid:
             refused_bid.is_refused = True
 
+        StepRecorder.pushed_bid = bid
+        StepRecorder.refused_bid = refused_bid
+
         logging.debug(f"Buffering {bid}")
         logging.debug(f"Refused {refused_bid}")
+
+
+    def _process(self, bid: Bid) -> Event:
+
+        bid.selection_time = self.timer.get_current_time()
+
+        for unit in self.processing_units:
+            if unit.is_free():
+                event = unit.process(bid)
+                return event
+
+    def process(self, bid: Bid) -> Event | None:
+
+        global target_id
+
+        if not self._has_free_unit():
+            self._buffer(bid)
+            return
+
+        target_id = bid.generating_unit_id
+        event = self._process(bid)
+        return event
 
 
 class SelectingDispatcher:
@@ -38,58 +71,56 @@ class SelectingDispatcher:
         self.processing_units: List[ProcessingUnit] = processing_units
         self.buffer: Buffer = buffer
 
-        self.target_id: int = None
-
     def _get_new_bid(self) -> Bid:
+        global target_id
+
         new_bid = None
 
         for index, bid in enumerate(self.buffer):
-            if bid.generating_unit_id == self.target_id:
+            if bid.generating_unit_id == target_id:
                 new_bid = self.buffer.queue.pop(index)
+                logging.debug(f"poped: idx={index}, {bid}")
                 break
 
-        if not new_bid:
-            self._init_new_package()
+        if new_bid:
+            return new_bid
+
+        self._init_new_package()
+        logging.debug("Init new package")
 
         for index, bid in enumerate(self.buffer):
-            if bid.generating_unit_id == self.target_id:
+            if bid.generating_unit_id == target_id:
                 new_bid = self.buffer.queue.pop(index)
+                logging.debug(f"poped: idx={index}, {bid}")
                 break
 
         return new_bid
 
     def _init_new_package(self) -> None:
+        global target_id
+
         ids = [bid.generating_unit_id for bid in self.buffer]
         if ids:
-            self.target_id = min(ids)
+            target_id = min(ids)
 
     def _process(self, bid: Bid) -> Event:
+
+        bid.selection_time = self.timer.get_current_time()
 
         for unit in self.processing_units:
             if unit.is_free():
                 event = unit.process(bid)
                 return event
 
-    def _has_free_unit(self) -> bool:
-        for unit in self.processing_units:
-            if unit.is_free():
-                return True
-
-        return False
-
-
-    def select(self) -> Event | None:
+    def select(self) -> Event:
         event = None
 
-        if not self._has_free_unit():
-            return None
-
         bid = self._get_new_bid()
-        StepRecorder.poped = bid
         if bid:
-            bid.selection_time = self.timer.get_current_time()
             event = self._process(bid)
 
-        logging.debug(f"select: target id = {self.target_id}")
+        StepRecorder.poped_bid = bid
+
+        logging.debug(f"select: {bid}")
 
         return event

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class Bid:
 
+    id: int
     generating_unit_id: int = 0
     generation_time: float = 0
 
@@ -15,9 +16,9 @@ class Bid:
 
     def __str__(self) -> str:
 
-        format_string = "[source: {}, gen. time: {:.2f}, device: {}, proc. time: {:.2f}, refused: {}]"
+        format_string = "[id: {}, source: {}, gen. time: {:.2f}, device: {}, proc. time: {:.2f}, refused: {}]"
 
-        return format_string.format(self.generating_unit_id, self.generation_time,
+        return format_string.format(self.id, self.generating_unit_id, self.generation_time,
                                     self.processing_unit_id, self.processing_time,
                                     self.is_refused
 )

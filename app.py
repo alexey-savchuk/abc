@@ -40,9 +40,9 @@ with dpg.window(tag="primary-window"):
     dpg.add_separator()
     dpg.add_input_float(label="approx. generation freq.",
                         tag=SETTINGS_GENERATION_FREQ,
-                        default_value=1.0,
+                        default_value=0.1,
                         min_value=0.1, min_clamped=True,
-                        max_value=1.0, max_clamped=True,
+                        max_value=10, max_clamped=True,
                         step=0.1, format="%.1f")
     dpg.add_separator()
     dpg.add_spacer()
@@ -61,6 +61,15 @@ with dpg.window(tag="primary-window"):
                         max_value=100.0, max_clamped=True,
                         step=0.1, format="%.1f")
     dpg.add_separator()
+    dpg.add_spacer()
+    dpg.add_separator()
+    dpg.add_input_int(label="max. bids [step mode only]",
+                      tag=SETTINGS_MAX_BIDS,
+                      default_value=100,
+                      min_value=10, min_clamped=True,
+                      max_value=1000, max_clamped=True,
+                      step=10)
+    dpg.add_separator()
 
     with dpg.window(label="Error", tag=ERROR_WINDOW, modal=True, show=False):
         dpg.add_text(ERROR_DEFAULT_MESSAGE, tag=ERROR_MESSAGE)
@@ -76,7 +85,7 @@ with dpg.window(tag="primary-window"):
 
         with dpg.group(horizontal=True):
             dpg.add_button(label="step", tag=STEP_BUTTON, callback=step_action)
-            dpg.add_button(label="stop", tag=STOP_BUTTON, callback=stop_action)
+            dpg.add_button(label="stop", tag=STOP_BUTTON, callback=stop_action, show=False)
 
         dpg.add_spacer()
         dpg.add_group(tag=EVENT_CALENDAR_CONTENT_BLOCK)

@@ -17,9 +17,10 @@ def _save_settings():
     Settings.generation_freq = dpg.get_value(item=SETTINGS_GENERATION_FREQ)
     Settings.min_processing_time = dpg.get_value(item=SETTINGS_MIN_PROCESSING_TIME)
     Settings.max_processing_time = dpg.get_value(item=SETTINGS_MAX_PROCESSING_TIME)
+    Settings.max_bids = dpg.get_value(item=SETTINGS_MAX_BIDS)
 
-    if Settings.min_processing_time >= Settings.max_processing_time:
-        raise ValueError("min. proccessing time < max. processing time!")
+    if Settings.min_processing_time > Settings.max_processing_time:
+        raise ValueError("Invalid input: min. proc. time > max. proc. time")
 
 
 def _get_supervisor() -> Supervisor:
@@ -29,7 +30,8 @@ def _get_supervisor() -> Supervisor:
                             buffer_capacity=Settings.buffer_capacity,
                             generation_freq=Settings.generation_freq,
                             min_proc_time=Settings.min_processing_time,
-                            max_proc_time=Settings.max_processing_time)
+                            max_proc_time=Settings.max_processing_time,
+                            num_total_bids=Settings.max_bids)
 
     return supervisor
 
@@ -170,7 +172,16 @@ def stop_action(sender, app_data) -> None:
 
 def start_auto_mode(sender, app_data) -> None:
 
-    _save_settings()
+    try:
+        _save_settings()
+    except ValueError as err:
+        dpg.set_value(item=ERROR_MESSAGE, value=err)
+        dpg.configure_item(item=ERROR_WINDOW, show=True)
+        return
+    except Exception:
+        dpg.set_value(item=ERROR_MESSAGE, value=ERROR_DEFAULT_MESSAGE)
+        dpg.configure_item(item=ERROR_WINDOW, show=True)
+        return
 
     dpg.delete_item(item=SUMMARY_TABLE_CONTENT_BLOCK, children_only=True)
 

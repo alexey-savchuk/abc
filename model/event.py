@@ -22,4 +22,4 @@ class Event:
   data: Bid | None = None
 
   def __str__(self) -> str:
-    return "Event[{:.2f}, {:s}, {:s}]".format(self.time, str(self.tag.name), str(self.data))
+    return "Event[{:.2f}, {:s}, {}]".format(self.time, str(self.tag.name), self.data)

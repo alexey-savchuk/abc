@@ -9,7 +9,7 @@ class UniformGenerator:
   def __init__(self, alpha: float, beta: float) -> None:
     """TODO"""
 
-    if alpha >= beta:
+    if alpha > beta:
       raise ValueError
 
     self.alpha = alpha

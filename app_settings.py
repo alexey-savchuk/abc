@@ -5,3 +5,4 @@ class Settings:
     generation_freq: float
     min_processing_time: float
     max_processing_time: float
+    max_bids: int
