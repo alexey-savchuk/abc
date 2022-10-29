@@ -201,14 +201,14 @@ class Supervisor:
         p_prev = 1
         p_next = 1
 
-        N = 10000
+        N = 100
 
         ill_state = False
 
         cond = 1
         max_iteration = 200
         num_iteration = 0
-        while cond > 0.001:
+        while cond > 0.1:
 
             print(cond)
             num_iteration += 1
@@ -233,10 +233,18 @@ class Supervisor:
 
                 # print("iter: ", event_type, bid)
 
+                if bid and refused_bid:
+                    if bid.generating_unit_id == 10 or refused_bid.generating_unit_id == 10:
+                        print(time, event_type)
+                        print(bid)
+                        print(refused_bid)
+                        print(shared_stats[10])
+                        print("-------------")
+
                 if event_type == EventTag.GENERATE.name:
                     unit_id = bid.generating_unit_id
                     special_stats.num_total_bids += 1
-
+                    
                     shared_stats[unit_id].num_total_bids += 1
 
                 if event_type == EventTag.PROCESS.name:

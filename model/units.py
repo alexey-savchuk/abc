@@ -4,7 +4,7 @@ from model.event import Event, EventTag
 from model.bid import Bid
 from model.marker import Marker
 from model.timer import Timer
-from utils.random import PoissonGenerator, UniformGenerator
+from utils.random import ExponentialGenerator, UniformGenerator
 
 
 class GeneratingUnit:
@@ -16,7 +16,7 @@ class GeneratingUnit:
             raise ValueError("generation frequency must be positive")
 
         self.timer = Timer()
-        self.generator = PoissonGenerator(generation_freq)
+        self.generator = ExponentialGenerator(generation_freq)
 
         self.unit_id = unit_id
 

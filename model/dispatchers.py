@@ -9,8 +9,6 @@ from model.step_record import StepRecorder
 from model.timer import Timer
 
 
-target_id = None
-
 class ProcessingDispatcher:
 
     def __init__(self, processing_units: List[ProcessingUnit], buffer: Buffer) -> None:
@@ -51,13 +49,10 @@ class ProcessingDispatcher:
 
     def process(self, bid: Bid) -> Event | None:
 
-        global target_id
-
         if not self._has_free_unit():
             self._buffer(bid)
             return
 
-        target_id = bid.generating_unit_id
         event = self._process(bid)
         return event
 
@@ -72,36 +67,18 @@ class SelectingDispatcher:
         self.buffer: Buffer = buffer
 
     def _get_new_bid(self) -> Bid:
-        global target_id
 
         new_bid = None
-
-        for index, bid in enumerate(self.buffer):
-            if bid.generating_unit_id == target_id:
-                new_bid = self.buffer.queue.pop(index)
-                logging.debug(f"poped: idx={index}, {bid}")
-                break
-
-        if new_bid:
-            return new_bid
-
-        self._init_new_package()
-        logging.debug("Init new package")
-
-        for index, bid in enumerate(self.buffer):
-            if bid.generating_unit_id == target_id:
-                new_bid = self.buffer.queue.pop(index)
-                logging.debug(f"poped: idx={index}, {bid}")
-                break
-
-        return new_bid
-
-    def _init_new_package(self) -> None:
-        global target_id
 
         ids = [bid.generating_unit_id for bid in self.buffer]
         if ids:
             target_id = min(ids)
+            for id, bid in enumerate(self.buffer):
+                if bid.generating_unit_id == target_id:
+                    new_bid = self.buffer.pop(id)
+                    break
+
+        return new_bid
 
     def _process(self, bid: Bid) -> Event:
 

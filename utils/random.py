@@ -22,7 +22,7 @@ class UniformGenerator:
     return r * (self.beta - self.alpha) + self.alpha
 
 
-class PoissonGenerator:
+class ExponentialGenerator:
 
   frequency: float
 
@@ -38,4 +38,5 @@ class PoissonGenerator:
     """TODO"""
 
     r = random.random()
-    return (-1 / self.frequency) * math.log(r)
+    return (-1 / self.frequency) * math.log(1 - r)
+     
