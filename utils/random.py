@@ -38,4 +38,4 @@ class PoissonGenerator:
     """TODO"""
 
     r = random.random()
-    return -1 / (self.frequency * math.log(r))
+    return (-1 / self.frequency) * math.log(r)

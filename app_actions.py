@@ -206,7 +206,7 @@ def _draw_summary_table(stats: Dict[int, StatsRecord]) -> None:
     for unit_id, record in stats.items():
         with dpg.table_row(parent=SUMMARY_TABLE):
             dpg.add_text(unit_id)
-            dpg.add_text(record.num_processed_bids)
+            dpg.add_text(record.num_total_bids)
 
             if record.num_processed_bids:
                 dpg.add_text(f"{record.num_refused_bids / record.num_total_bids:.5f}")

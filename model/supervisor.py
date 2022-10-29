@@ -201,15 +201,16 @@ class Supervisor:
         p_prev = 1
         p_next = 1
 
-        N = 100
+        N = 10000
 
         ill_state = False
 
         cond = 1
         max_iteration = 200
         num_iteration = 0
-        while cond > 0.1:
+        while cond > 0.001:
 
+            print(cond)
             num_iteration += 1
             special_stats = SpecialStatsRecord()
 
@@ -275,7 +276,7 @@ class Supervisor:
 
             print("N = ", N)
 
-            cond = p_next - p_prev
+            cond = math.fabs(p_next - p_prev)
 
             p_prev = p_next
 
