@@ -13,28 +13,6 @@ class CyclicQueue(Generic[T]):
         self.data: List[T] = []
         self.capacity: int = capacity
 
-    def _rotate(self, n: int):
-        n = n % self.capacity
-        self.data = self.data[-n:] + self.data[:-n]
-
-    def push_with_displace(self, x: T) -> T | None:
-
-        displaced = None
-
-        if len(self.data) == self.capacity:
-            displaced = self.data.pop()
-
-        self.data.append(x)
-
-        return displaced
-
-        # cap = 5 
-        # [ 1 (1), 2 (2), 4 (4), 5 (5), _ ]
-
-        # cap = 5 
-        # [ 1 (1), 2 (2), 3 (3) 4 (4), 5(5)]
-        # [ 1 (1), 2 (2), _, <-4 (4), <-5(5), _new_place_ ]
-
     def is_full(self):
         return len(self.data) == self.capacity
 

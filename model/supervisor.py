@@ -244,7 +244,7 @@ class Supervisor:
                 if event_type == EventTag.GENERATE.name:
                     unit_id = bid.generating_unit_id
                     special_stats.num_total_bids += 1
-                    
+
                     shared_stats[unit_id].num_total_bids += 1
 
                 if event_type == EventTag.PROCESS.name:
@@ -303,7 +303,7 @@ class Supervisor:
 
             if record.num_processed_bids:
                 waiting_mean = record.sum_waiting_time / record.num_processed_bids
-                waiting_mean_sqr = record.sum_sqr_processing_time / record.num_processed_bids
+                waiting_mean_sqr = record.sum_sqr_waiting_time / record.num_processed_bids
                 waiting_variance = waiting_mean_sqr - math.pow(waiting_mean, 2)
 
                 processing_mean = record.sum_processing_time / record.num_processed_bids

@@ -220,7 +220,7 @@ def _draw_summary_table(stats: Dict[int, StatsRecord]) -> None:
 
             if record.num_processed_bids:
                 waiting_mean = record.sum_waiting_time / record.num_processed_bids
-                waiting_mean_sqr = record.sum_sqr_processing_time / record.num_processed_bids
+                waiting_mean_sqr = record.sum_sqr_waiting_time / record.num_processed_bids
                 waiting_variance = waiting_mean_sqr - math.pow(waiting_mean, 2)
 
                 processing_mean = record.sum_processing_time / record.num_processed_bids
