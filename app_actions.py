@@ -55,9 +55,17 @@ def _draw_event_calendar_content_block() -> None:
                    borders_outerH=True, borders_innerV=True, borders_innerH=True, borders_outerV=True,
                    row_background=True, scrollY=True, no_host_extendX=True):
 
-        dpg.add_table_column(label="model time")
+        dpg.add_table_column(label="time")
         dpg.add_table_column(label="event type")
-        dpg.add_table_column(label="current bid")
+        #dpg.add_table_column(label="current bid")
+        #dpg.add_table_column(label="id")
+        dpg.add_table_column(label="src. id")
+        dpg.add_table_column(label="gen. time")
+        dpg.add_table_column(label="dev. id")
+        dpg.add_table_column(label="pr. time")
+        #dpg.add_table_column(label="refused")
+
+
 
 
 def _draw_memory_buffer(bids: Iterable[Bid], pushed: Bid, poped: Bid, refused: Bid) -> None:
@@ -69,14 +77,16 @@ def _draw_memory_buffer(bids: Iterable[Bid], pushed: Bid, poped: Bid, refused: B
     dpg.set_value(item="refused_bid", value=refused)
 
     dpg.add_table_column(label="position", parent=MEMORY_BUFFER)
-    dpg.add_table_column(label="bid", parent=MEMORY_BUFFER)
+    dpg.add_table_column(label="src. id", parent=MEMORY_BUFFER)
+    dpg.add_table_column(label="gen. time", parent=MEMORY_BUFFER)
+
 
     i = 1
     for bid in bids:
         with dpg.table_row(parent=MEMORY_BUFFER):
             dpg.add_text(i)
-            dpg.add_text(bid)
-
+            dpg.add_text(bid.generating_unit_id)
+            dpg.add_text(f"{bid.generation_time:.2f}")
         i += 1
 
 
@@ -127,6 +137,9 @@ def start_step_mode(sender, app_data) -> None:
     dpg.configure_item(item=STEP_BUTTON, enabled=True)
     dpg.configure_item(item=STOP_BUTTON, enabled=True)
 
+    dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=False)
+    dpg.configure_item(item=DEVICE_USAGE_TABLE_WINDOW, show=False)
+
     dpg.configure_item(item=EVENT_CALENDAR_WINDOW, show=True)
     dpg.configure_item(item=MEMORY_BUFFER_WINDOW, show=True)
 
@@ -148,7 +161,11 @@ def step_action(sender, app_data) -> None:
         with dpg.table_row(tag=f"row_{num_events + 1}", before=f"row_{num_events}"):
             dpg.add_text(f"{time:.2f}")
             dpg.add_text(event)
-            dpg.add_text(bid)
+            dpg.add_text(bid.generating_unit_id)
+            dpg.add_text(f"{bid.generation_time:.2f}")
+            dpg.add_text(bid.processing_unit_id)
+            dpg.add_text(f"{bid.processing_time:.2f}")
+
 
     buffer, pushed, poped, refused = supervisor.get_buffer_info()
     _draw_memory_buffer(buffer, pushed, poped, refused)
@@ -289,6 +306,9 @@ def start_auto_mode(sender, app_data) -> None:
 
     dpg.add_text("processing...", tag="dummy_text1", parent=SUMMARY_TABLE_CONTENT_BLOCK, before=SUMMARY_TABLE)
     dpg.add_text("processing...", tag="dummy_text2", parent=DEVICE_USAGE_TABLE_CONTENT_BLOCK, before=DEVICE_USAGE_TABLE)
+
+    dpg.configure_item(item=EVENT_CALENDAR_WINDOW, show=False)
+    dpg.configure_item(item=MEMORY_BUFFER_WINDOW, show=False)
 
     dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=True)
     dpg.configure_item(item=DEVICE_USAGE_TABLE_WINDOW, show=True)
