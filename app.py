@@ -2,8 +2,10 @@
 
 import logging
 import dearpygui.dearpygui as dpg
-from app_actions import step_action, start_auto_mode, start_step_mode, stop_action
+from dearpygui.demo import _hsv_to_rgb
 
+import app_tags
+from app_actions import step_action, stop_action, set_way_callback, start_button
 
 from app_tags import *
 
@@ -47,16 +49,16 @@ with dpg.window(tag="primary-window"):
     dpg.add_text("ADVANCED SETTINGS")
     dpg.add_spacer()
     dpg.add_separator()
-    dpg.add_text("REQUEST")
+    dpg.add_text("REQUEST GENERATION")
     dpg.add_slider_float(tag=SETTINGS_GENERATION_FREQ,
                         default_value=0.1,
                         min_value=0.1,
                         max_value=10,
-                        format="generation frequency = %.1f",
+                        format="frequency = %.1f",
                         width=1215, height=10)
     dpg.add_separator()
     dpg.add_spacer()
-    dpg.add_text("PROCESSING TIME")
+    dpg.add_text("PROCESSING TIME PER REQUEST")
     dpg.add_slider_float(tag=SETTINGS_MIN_PROCESSING_TIME,
                         default_value=20.0,
                         min_value=1.0,
@@ -80,15 +82,26 @@ with dpg.window(tag="primary-window"):
                       format="max number = %d",
                         width=1215, height=10)
     dpg.add_separator()
+    dpg.add_text("WAYS")
+    with dpg.group(horizontal=True):
+
+        dpg.add_radio_button(items=["step", "auto"],
+                             horizontal=True,
+                                callback=set_way_callback)
+        i=4
+        with dpg.theme(tag="__demo_theme"):
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, _hsv_to_rgb(i / 7.0, 0.6, 0.6))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, _hsv_to_rgb(i / 7.0, 0.8, 0.8))
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, _hsv_to_rgb(i / 7.0, 0.7, 0.7))
+                dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, i * 5)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, i * 3, i * 3)
+
+        dpg.add_button(label="START / RESTART", callback=start_button)
+        dpg.bind_item_theme(dpg.last_item(), "__demo_theme")
 
     with dpg.window(label="Error", tag=ERROR_WINDOW, modal=True, show=False):
         dpg.add_text(ERROR_DEFAULT_MESSAGE, tag=ERROR_MESSAGE)
-
-
-    dpg.add_spacer()
-    with dpg.group(horizontal=True):
-        dpg.add_button(label="start step mode", callback=start_step_mode)
-        dpg.add_button(label="start auto mode", callback=start_auto_mode)
 
     with dpg.child_window(label="Event Calendar",
                     tag=EVENT_CALENDAR_WINDOW,
@@ -131,7 +144,10 @@ with dpg.window(tag="primary-window"):
 with dpg.theme() as global_theme:
     with dpg.theme_component(dpg.mvAll):
         dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (145, 93, 93), category=dpg.mvThemeCat_Core)
-        dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (0, 0, 0), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, (145, 93, 93), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (46, 8, 42), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (46, 8, 42), category=dpg.mvThemeCat_Core)
+        dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, (0, 8, 42), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Text, (255, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_color(dpg.mvThemeCol_Button, (1, 255, 255), category=dpg.mvThemeCat_Core)
         dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 5, category=dpg.mvThemeCat_Core)

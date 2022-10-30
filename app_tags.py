@@ -28,3 +28,5 @@ SUMMARY_TABLE = "summary_table"
 DEVICE_USAGE_TABLE_WINDOW = "device_usage_table_window"
 DEVICE_USAGE_TABLE_CONTENT_BLOCK = "device_usage_table_content_block"
 DEVICE_USAGE_TABLE = "device_usage_table"
+
+WAY = "step"

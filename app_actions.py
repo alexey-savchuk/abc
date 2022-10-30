@@ -4,13 +4,13 @@ from typing import Dict, Iterable
 import dearpygui.dearpygui as dpg
 from numpy import int16
 
+import app_tags
 from app_tags import *
 from app_settings import *
 from model.auto_mode import StatsRecord
 
 from model.bid import Bid
 from model.supervisor import Supervisor
-
 
 def _save_settings():
 
@@ -112,37 +112,6 @@ def _draw_memory_buffer_content_block() -> None:
                    row_background=True, scrollY=True, no_host_extendX=True):
         dpg.add_table_column(label="position", parent=MEMORY_BUFFER)
         dpg.add_table_column(label="bid", parent=MEMORY_BUFFER)
-
-
-def start_step_mode(sender, app_data) -> None:
-
-    try:
-        _save_settings()
-    except ValueError as err:
-        dpg.set_value(item=ERROR_MESSAGE, value=err)
-        dpg.configure_item(item=ERROR_WINDOW, show=True)
-        return
-    except Exception:
-        dpg.set_value(item=ERROR_MESSAGE, value=ERROR_DEFAULT_MESSAGE)
-        dpg.configure_item(item=ERROR_WINDOW, show=True)
-        return
-
-    _draw_event_calendar_content_block()
-    _draw_memory_buffer_content_block()
-
-    global supervisor
-    supervisor = _get_supervisor()
-    supervisor.start_step_mode()
-
-    dpg.configure_item(item=STEP_BUTTON, enabled=True)
-    dpg.configure_item(item=STOP_BUTTON, enabled=True)
-
-    dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=False)
-    dpg.configure_item(item=DEVICE_USAGE_TABLE_WINDOW, show=False)
-
-    dpg.configure_item(item=EVENT_CALENDAR_WINDOW, show=True)
-    dpg.configure_item(item=MEMORY_BUFFER_WINDOW, show=True)
-
 
 def step_action(sender, app_data) -> None:
 
@@ -280,46 +249,81 @@ def _draw_device_usage_table(stats: Dict[int, float]) -> None:
 
     dpg.delete_item(item=DEVICE_USAGE_TABLE, children_only=True)
 
-    dpg.add_table_column(label="device", parent=DEVICE_USAGE_TABLE)
-    dpg.add_table_column(label="K", parent=DEVICE_USAGE_TABLE)
+    dpg.add_table_column(label="Device", parent=DEVICE_USAGE_TABLE)
+    dpg.add_table_column(label="Coefficient", parent=DEVICE_USAGE_TABLE)
 
     for unit_id, K in stats.items():
         with dpg.table_row(parent=DEVICE_USAGE_TABLE):
             dpg.add_text(unit_id)
-            dpg.add_text(K)
+            dpg.add_text(str(int(K * 100)) + '%')
 
-def start_auto_mode(sender, app_data) -> None:
+def set_way_callback(sender, app_data):
+    if app_data == "step":
+        app_tags.WAY = "step"
+    elif app_data == "auto":
+        app_tags.WAY = "auto"
 
-    try:
-        _save_settings()
-    except ValueError as err:
-        dpg.set_value(item=ERROR_MESSAGE, value=err)
-        dpg.configure_item(item=ERROR_WINDOW, show=True)
-        return
-    except Exception:
-        dpg.set_value(item=ERROR_MESSAGE, value=ERROR_DEFAULT_MESSAGE)
-        dpg.configure_item(item=ERROR_WINDOW, show=True)
-        return
+    print(app_tags.WAY)
 
-    _draw_summary_table_content_block()
-    _draw_device_usage_table_content_block()
+def start_button(sender, app_data) -> None:
+    if app_tags.WAY == "step":
+        try:
+            _save_settings()
+        except ValueError as err:
+            dpg.set_value(item=ERROR_MESSAGE, value=err)
+            dpg.configure_item(item=ERROR_WINDOW, show=True)
+            return
+        except Exception:
+            dpg.set_value(item=ERROR_MESSAGE, value=ERROR_DEFAULT_MESSAGE)
+            dpg.configure_item(item=ERROR_WINDOW, show=True)
+            return
 
-    dpg.add_text("processing...", tag="dummy_text1", parent=SUMMARY_TABLE_CONTENT_BLOCK, before=SUMMARY_TABLE)
-    dpg.add_text("processing...", tag="dummy_text2", parent=DEVICE_USAGE_TABLE_CONTENT_BLOCK, before=DEVICE_USAGE_TABLE)
+        _draw_event_calendar_content_block()
+        _draw_memory_buffer_content_block()
 
-    dpg.configure_item(item=EVENT_CALENDAR_WINDOW, show=False)
-    dpg.configure_item(item=MEMORY_BUFFER_WINDOW, show=False)
+        global supervisor
+        supervisor = _get_supervisor()
+        supervisor.start_step_mode()
 
-    dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=True)
-    dpg.configure_item(item=DEVICE_USAGE_TABLE_WINDOW, show=True)
+        dpg.configure_item(item=STEP_BUTTON, enabled=True)
+        dpg.configure_item(item=STOP_BUTTON, enabled=True)
 
-    global supervisor
-    supervisor = _get_supervisor()
+        dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=False)
+        dpg.configure_item(item=DEVICE_USAGE_TABLE_WINDOW, show=False)
 
-    stats, device_stats = supervisor.start_auto_mode()
+        dpg.configure_item(item=EVENT_CALENDAR_WINDOW, show=True)
+        dpg.configure_item(item=MEMORY_BUFFER_WINDOW, show=True)
+    elif app_tags.WAY == "auto":
+        try:
+            _save_settings()
+        except ValueError as err:
+            dpg.set_value(item=ERROR_MESSAGE, value=err)
+            dpg.configure_item(item=ERROR_WINDOW, show=True)
+            return
+        except Exception:
+            dpg.set_value(item=ERROR_MESSAGE, value=ERROR_DEFAULT_MESSAGE)
+            dpg.configure_item(item=ERROR_WINDOW, show=True)
+            return
 
-    dpg.delete_item(item="dummy_text1")
-    dpg.delete_item(item="dummy_text2")
-    _draw_summary_table(stats)
-    _draw_device_usage_table(device_stats)
+        _draw_summary_table_content_block()
+        _draw_device_usage_table_content_block()
 
+        dpg.add_text("processing...", tag="dummy_text1", parent=SUMMARY_TABLE_CONTENT_BLOCK, before=SUMMARY_TABLE)
+        dpg.add_text("processing...", tag="dummy_text2", parent=DEVICE_USAGE_TABLE_CONTENT_BLOCK,
+                     before=DEVICE_USAGE_TABLE)
+
+        dpg.configure_item(item=EVENT_CALENDAR_WINDOW, show=False)
+        dpg.configure_item(item=MEMORY_BUFFER_WINDOW, show=False)
+
+        dpg.configure_item(item=SUMMARY_TABLE_WINDOW, show=True)
+        dpg.configure_item(item=DEVICE_USAGE_TABLE_WINDOW, show=True)
+
+
+        supervisor = _get_supervisor()
+
+        stats, device_stats = supervisor.start_auto_mode()
+
+        dpg.delete_item(item="dummy_text1")
+        dpg.delete_item(item="dummy_text2")
+        _draw_summary_table(stats)
+        _draw_device_usage_table(device_stats)
