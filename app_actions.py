@@ -74,7 +74,10 @@ def _draw_memory_buffer(bids: Iterable[Bid], pushed: Bid, poped: Bid, refused: B
 
     dpg.set_value(item="pushed_bid", value=pushed)
     dpg.set_value(item="poped_bid", value=poped)
-    dpg.set_value(item="refused_bid", value=refused)
+    if refused:
+        dpg.set_value(item="refused_bid", value=f"{refused.generation_time}")
+    else:
+        dpg.set_value(item="refused_bid", value="")
 
     dpg.add_table_column(label="position", parent=MEMORY_BUFFER)
     dpg.add_table_column(label="src. id", parent=MEMORY_BUFFER)
