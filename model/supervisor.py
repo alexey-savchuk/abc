@@ -20,9 +20,9 @@ class Supervisor:
                  num_sources: int,
                  num_devices: int,
                  buffer_capacity: int,
-                 generation_freq: float,
-                 min_proc_time: float,
-                 max_proc_time: float,
+                 processing_freq: float,
+                 min_gen_time: float,
+                 max_gen_time: float,
                  num_total_bids: int) -> None:
 
         self.events: List[Event] = []
@@ -34,8 +34,8 @@ class Supervisor:
         self.num_total_bids = num_total_bids
         self.current_num_bids = 0
 
-        self.generating_units = [GeneratingUnit(i + 1, generation_freq) for i in range(num_sources)]
-        self.processing_units = [ProcessingUnit(i + 1, min_proc_time, max_proc_time) for i in range(num_devices)]
+        self.generating_units = [GeneratingUnit(i + 1, min_gen_time, max_gen_time) for i in range(num_sources)]
+        self.processing_units = [ProcessingUnit(i + 1, processing_freq) for i in range(num_devices)]
 
         self.memory_buffer = Buffer(buffer_capacity)
 

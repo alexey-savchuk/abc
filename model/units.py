@@ -10,13 +10,13 @@ from utils.random import ExponentialGenerator, UniformGenerator
 class GeneratingUnit:
     """TODO"""
 
-    def __init__(self, unit_id: int, generation_freq: float) -> None:
+    def __init__(self, unit_id: int, min_gen_time: float, max_gen_time: float) -> None:
 
-        if generation_freq <= 0:
-            raise ValueError("generation frequency must be positive")
+        if min_gen_time > max_gen_time:
+            raise ValueError("min. processing time must be less than max. processing time")
 
         self.timer = Timer()
-        self.generator = ExponentialGenerator(generation_freq)
+        self.generator = UniformGenerator(min_gen_time, max_gen_time)
 
         self.unit_id = unit_id
 
@@ -37,14 +37,13 @@ class GeneratingUnit:
 class ProcessingUnit:
     """TODO"""
 
-    def __init__(self, unit_id: int, min_proc_time: float, max_proc_time: float) -> None:
+    def __init__(self, unit_id: int, proc_freq: float) -> None:
 
-        if min_proc_time > max_proc_time:
-            raise ValueError("min. processing time must be less than max. processing time")
-
+        if proc_freq <= 0:
+            raise ValueError("generation frequency must be positive")
 
         self.timer = Timer()
-        self.generator = UniformGenerator(min_proc_time, max_proc_time)
+        self.generator = ExponentialGenerator(proc_freq)
 
         self.unit_id = unit_id
         self.free = True

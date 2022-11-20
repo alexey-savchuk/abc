@@ -2,9 +2,9 @@
 SETTINGS_NUM_SOURCES = "settings_num_sources"
 SETTINGS_NUM_DEVICES = "settings_num_devices"
 SETTINGS_BUFFER_CAPACITY = "setting_buffer_capacity"
-SETTINGS_GENERATION_FREQ = "settings_generation_freq"
-SETTINGS_MIN_PROCESSING_TIME = "settings_min_processing_time"
-SETTINGS_MAX_PROCESSING_TIME = "settings_max_processing_time"
+SETTINGS_PROCESSING_FREQ = "settings_processing_freq"
+SETTINGS_MIN_GENERATION_TIME = "settings_min_generation_time"
+SETTINGS_MAX_GENERATION_TIME = "settings_max_generation_time"
 SETTINGS_MAX_BIDS = "settings_max_bids"
 
 ERROR_WINDOW = "error_window"

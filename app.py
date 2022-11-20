@@ -47,29 +47,31 @@ with dpg.window(tag="primary-window"):
 
     dpg.add_separator()
     dpg.add_text("ADVANCED SETTINGS")
-    dpg.add_spacer()
-    dpg.add_separator()
-    dpg.add_text("REQUEST GENERATION")
-    dpg.add_slider_float(tag=SETTINGS_GENERATION_FREQ,
-                        default_value=0.1,
-                        min_value=0.1,
-                        max_value=10,
-                        format="frequency = %.1f",
-                        width=1215, height=10)
+
     dpg.add_separator()
     dpg.add_spacer()
-    dpg.add_text("PROCESSING TIME PER REQUEST")
-    dpg.add_slider_float(tag=SETTINGS_MIN_PROCESSING_TIME,
+    dpg.add_text("GENERATION TIME PER REQUEST")
+    dpg.add_slider_float(tag=SETTINGS_MIN_GENERATION_TIME,
                         default_value=20.0,
                         min_value=1.0,
                         max_value=100.0,
                         format="min = %.1f",
                         width=1215, height=10)
-    dpg.add_slider_float(tag=SETTINGS_MAX_PROCESSING_TIME,
+    dpg.add_slider_float(tag=SETTINGS_MAX_GENERATION_TIME,
                         default_value=80.0,
                         min_value=1.0,
                         max_value=100.0,
                         format="max = %.1f",
+                        width=1215, height=10)
+
+    dpg.add_spacer()
+    dpg.add_separator()
+    dpg.add_text("REQUEST Processing")
+    dpg.add_slider_float(tag=SETTINGS_PROCESSING_FREQ,
+                        default_value=0.1,
+                        min_value=0.1,
+                        max_value=10,
+                        format="frequency = %.1f",
                         width=1215, height=10)
     dpg.add_separator()
     dpg.add_spacer()

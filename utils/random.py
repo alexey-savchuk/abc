@@ -39,4 +39,3 @@ class ExponentialGenerator:
 
     r = random.random()
     return (-1 / self.frequency) * math.log(1 - r)
-     

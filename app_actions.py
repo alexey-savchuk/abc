@@ -17,12 +17,12 @@ def _save_settings():
     Settings.num_sources = dpg.get_value(item=SETTINGS_NUM_SOURCES)
     Settings.num_devices = dpg.get_value(item=SETTINGS_NUM_DEVICES)
     Settings.buffer_capacity = dpg.get_value(item=SETTINGS_BUFFER_CAPACITY)
-    Settings.generation_freq = dpg.get_value(item=SETTINGS_GENERATION_FREQ)
-    Settings.min_processing_time = dpg.get_value(item=SETTINGS_MIN_PROCESSING_TIME)
-    Settings.max_processing_time = dpg.get_value(item=SETTINGS_MAX_PROCESSING_TIME)
+    Settings.processing_freq = dpg.get_value(item=SETTINGS_PROCESSING_FREQ)
+    Settings.min_generating_time = dpg.get_value(item=SETTINGS_MIN_GENERATION_TIME)
+    Settings.max_generating_time = dpg.get_value(item=SETTINGS_MAX_GENERATION_TIME)
     Settings.max_bids = dpg.get_value(item=SETTINGS_MAX_BIDS)
 
-    if Settings.min_processing_time > Settings.max_processing_time:
+    if Settings.min_generating_time > Settings.max_generating_time:
         raise ValueError("Invalid input: min. proc. time > max. proc. time")
 
 
@@ -31,9 +31,9 @@ def _get_supervisor() -> Supervisor:
     supervisor = Supervisor(num_sources=Settings.num_sources,
                             num_devices=Settings.num_devices,
                             buffer_capacity=Settings.buffer_capacity,
-                            generation_freq=Settings.generation_freq,
-                            min_proc_time=Settings.min_processing_time,
-                            max_proc_time=Settings.max_processing_time,
+                            processing_freq=Settings.processing_freq,
+                            min_gen_time=Settings.min_generating_time,
+                            max_gen_time=Settings.max_generating_time,
                             num_total_bids=Settings.max_bids)
 
     return supervisor
