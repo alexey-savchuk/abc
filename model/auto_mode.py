@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-
 @dataclass
 class StatsRecord:
     num_total_bids: int = 0

@@ -3,7 +3,6 @@ from enum import Enum, auto
 
 from model.bid import Bid
 
-
 class EventTag(Enum):
   """TODO"""
 
@@ -11,7 +10,6 @@ class EventTag(Enum):
   GENERATE = auto()
   PROCESS = auto()
   END = auto()
-
 
 @dataclass
 class Event:

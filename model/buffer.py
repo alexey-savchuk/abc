@@ -7,13 +7,10 @@ class Buffer:
     def __init__(self, capacity: int) -> None:
         super().__init__()
 
-        self.queue: CyclicQueue[Bid] = CyclicQueue(capacity)
-
     def push_with_displace(self, bid: Bid) -> Bid | None:
-        #return self.queue.push_with_displace(bid)
         refused_bid = None
         if self.queue.is_full():
-            refused_bid = self.pop(self.queue.capacity - 1) # pop_with_shift
+            refused_bid = self.pop(self.queue.capacity - 1)
 
         self.queue.push(bid)
         return refused_bid

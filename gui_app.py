@@ -124,21 +124,13 @@ with dpg.window(tag="primary-window"):
 
         dpg.add_group(tag=MEMORY_BUFFER_CONTENT_BLOCK)
 
-    with dpg.child_window(label="Summary Table",
-                    tag=SUMMARY_TABLE_WINDOW,
-                    show=False,
-                    width=740, height=410,
+    with dpg.child_window(label="GRAF_WINDOW",
+                    tag=GRAF_WINDOW,
+                    show=False,                    
+                    width=720 * 2, height=410 * 2,
                     pos=(0, 380)):
-
-        dpg.add_group(tag=SUMMARY_TABLE_CONTENT_BLOCK)
-
-    with dpg.child_window(label="Device Usage",
-                    tag=DEVICE_USAGE_TABLE_WINDOW,
-                    show=False,
-                    width=740, height=410,
-                    pos=(740, 380)):
-
-        dpg.add_group(tag=DEVICE_USAGE_TABLE_CONTENT_BLOCK)
+        with dpg.group(horizontal=True):
+            dpg.add_group(tag=GRAF_CONTENT_BLOCK)
 
 
 with dpg.theme() as global_theme:
@@ -160,7 +152,7 @@ dpg.bind_theme(global_theme)
 
 dpg.set_primary_window(window="primary-window", value=True)
 
-dpg.create_viewport(title='abc', width=1480, height=800)
+dpg.create_viewport(title='Application', width=1480, height=800)
 dpg.setup_dearpygui()
 dpg.show_viewport()
 

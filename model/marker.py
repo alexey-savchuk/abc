@@ -1,9 +1,4 @@
-
-
-
 from utils.singleton import Singleton
-
-
 class Marker(metaclass=Singleton):
 
     id: int = 0

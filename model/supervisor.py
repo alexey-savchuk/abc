@@ -157,7 +157,6 @@ class Supervisor:
             case EventTag.GENERATE:
                 self._trigger_generating_unit(current_bid.generating_unit_id)
                 self._trigger_processing_dispatcher(current_bid)
-                # self._trigger_selecting_dispatcher()
 
             case EventTag.PROCESS:
                 self._trigger_processing_unit(current_bid.processing_unit_id)
@@ -183,9 +182,6 @@ class Supervisor:
                 StepRecorder.poped_bid,
                 StepRecorder.refused_bid)
 
-    # Auto mode utils
-
-    # Auto mode
     def start_auto_mode(self):
 
         @dataclass
@@ -202,25 +198,22 @@ class Supervisor:
         p_next = 1
 
         N = 100
+        # N = 500
 
         ill_state = False
 
         cond = 1
         max_iteration = 200
+        # max_iteration = 50
         num_iteration = 0
         while cond > 0.1:
 
-            print(cond)
             num_iteration += 1
             special_stats = SpecialStatsRecord()
 
             if num_iteration > max_iteration:
                 ill_state = True
                 break
-
-            # if N < 100:
-                # ill_state = True
-                # break
 
             self.num_total_bids = N
             self.start_step_mode()
@@ -230,16 +223,6 @@ class Supervisor:
             _, _, _, refused_bid = self.get_buffer_info()
 
             while event_type != EventTag.END.name:
-
-                # print("iter: ", event_type, bid)
-
-                if bid and refused_bid:
-                    if bid.generating_unit_id == 10 or refused_bid.generating_unit_id == 10:
-                        print(time, event_type)
-                        print(bid)
-                        print(refused_bid)
-                        print(shared_stats[10])
-                        print("-------------")
 
                 if event_type == EventTag.GENERATE.name:
                     unit_id = bid.generating_unit_id
@@ -282,7 +265,6 @@ class Supervisor:
                 d = 0.1
                 N = (math.pow(t_a, 2) * (1 - p_next)) / (p_next * math.pow(d, 2))
 
-            print("N = ", N)
 
             cond = math.fabs(p_next - p_prev)
 
@@ -294,7 +276,6 @@ class Supervisor:
                 record.probability = None
 
         for unit_id, record in shared_stats.items():
-            print(unit_id, record)
 
             waiting_mean = None
             waiting_variance = None
@@ -309,12 +290,6 @@ class Supervisor:
                 processing_mean = record.sum_processing_time / record.num_processed_bids
                 processing_mean_sqr = record.sum_sqr_processing_time / record.num_processed_bids
                 processing_variance = processing_mean_sqr - math.pow(processing_mean, 2)
-
-            print("waiting mean = ", waiting_mean)
-            print("waiting variance = ", waiting_variance)
-
-            print("processing mean = ", processing_mean)
-            print("processing variance = ", processing_variance)
 
         for unit_id in devices_stats.keys():
             devices_stats[unit_id] /= simulation_total_time
