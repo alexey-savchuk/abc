@@ -69,7 +69,7 @@ def _draw_event_calendar_content_block() -> None:
         dpg.add_table_column(label="dev. id")
         dpg.add_table_column(label="pr. time")
 
-def _draw_memory_buffer(bids: Iterable[Bid], pushed: Bid, poped: Bid, refused: Bid) -> None:
+def _draw_memory_buffer(bids: Iterable[Bid], pushed: Bid, poped: Bid, refused: Bid, pointer: int) -> None:
 
     dpg.delete_item(item=MEMORY_BUFFER, children_only=True)
 
@@ -81,14 +81,24 @@ def _draw_memory_buffer(bids: Iterable[Bid], pushed: Bid, poped: Bid, refused: B
     dpg.add_table_column(label="position", parent=MEMORY_BUFFER)
     dpg.add_table_column(label="src. id", parent=MEMORY_BUFFER)
     dpg.add_table_column(label="gen. time", parent=MEMORY_BUFFER)
+    dpg.add_table_column(label="p", parent=MEMORY_BUFFER)
 
-
-    i = 1
+    i = 0
     for bid in bids:
         with dpg.table_row(parent=MEMORY_BUFFER):
-            dpg.add_text(i)
-            dpg.add_text(bid.generating_unit_id)
-            dpg.add_text(f"{bid.generation_time:.2f}")
+            dpg.add_text(i + 1)
+            if bid:
+                dpg.add_text(bid.generating_unit_id)
+                dpg.add_text(f"{bid.generation_time:.2f}")
+            else:
+                dpg.add_text("None")
+                dpg.add_text("None")
+
+            if pointer == i:
+                dpg.add_text("1")
+            else:
+                dpg.add_text("0")
+
         i += 1
 
 
@@ -122,16 +132,17 @@ def step_action(sender, app_data) -> None:
             dpg.add_text(bid)
     else:
         with dpg.table_row(tag=f"row_{num_events + 1}", before=f"row_{num_events}"):
-            dpg.add_text(f"{time:.2f}")
-            dpg.add_text(event)
-            dpg.add_text(bid.generating_unit_id)
-            dpg.add_text(f"{bid.generation_time:.2f}")
-            dpg.add_text(bid.processing_unit_id)
-            dpg.add_text(f"{bid.processing_time:.2f}")
+            if bid:
+                dpg.add_text(f"{time:.2f}")
+                dpg.add_text(event)
+                dpg.add_text(bid.generating_unit_id)
+                dpg.add_text(f"{bid.generation_time:.2f}")
+                dpg.add_text(bid.processing_unit_id)
+                dpg.add_text(f"{bid.processing_time:.2f}")
 
 
-    buffer, pushed, poped, refused = supervisor.get_buffer_info()
-    _draw_memory_buffer(buffer, pushed, poped, refused)
+    buffer, pushed, poped, refused, pointer = supervisor.get_buffer_info()
+    _draw_memory_buffer(buffer, pushed, poped, refused, pointer)
 
     num_events += 1
 
@@ -204,21 +215,12 @@ def start_button(sender, app_data) -> None:
 
         dpg.configure_item(item=GRAF_WINDOW, show=True)
 
-
-        # supervisor = _get_supervisor()
-
-        # stats, device_stats = supervisor.start_auto_mode()
-        #
-        # dpg.delete_item(item="dummy_text1")
-        # dpg.delete_item(item="dummy_text2")
-        executor = concurrent.futures.ProcessPoolExecutor(max_workers=6)
-        # 111
         def f_1():
             data_y = []
             data_x = []
             for i in range(0, 11):
                 print(i)
-                supervisor = Supervisor(num_sources= (i + 1) * 10,
+                supervisor = Supervisor(num_sources= i * 10 + 1,
                                 num_devices=10,
                                 buffer_capacity=10,
                                 generation_freq=Settings.generation_freq,
@@ -240,16 +242,16 @@ def start_button(sender, app_data) -> None:
             _draw_grafic(data_x, data_y, "Ref Prob / sources", "Probability", "Sources")
             print("done")
 
-        
+
 
         def f_2():
             data_y1 = []
             data_x1 = []
-            for i in range(0, 5):
+            for i in range(0, 11):
                 print(i)
                 supervisor1 = Supervisor(num_sources= 10,
                                 num_devices=10,
-                                buffer_capacity=(i + 1) * 10,
+                                buffer_capacity=i * 10 + 1,
                                 generation_freq=Settings.generation_freq,
                                 min_proc_time=Settings.min_processing_time,
                                 max_proc_time=Settings.max_processing_time,
@@ -268,14 +270,14 @@ def start_button(sender, app_data) -> None:
 
             _draw_grafic(data_x1, data_y1, "Ref Prob / Buffer size", "Probability", "Buffer")
             print("done")
-        
+
         def f_3():
             data_y2 = []
             data_x2 = []
-            for i in range(0, 5):
+            for i in range(0, 11):
                 print(i)
                 supervisor2 = Supervisor(num_sources= 10,
-                                num_devices=(i + 1) * 10,
+                                num_devices=i * 10 + 1,
                                 buffer_capacity=10,
                                 generation_freq=Settings.generation_freq,
                                 min_proc_time=Settings.min_processing_time,
@@ -299,9 +301,9 @@ def start_button(sender, app_data) -> None:
         def f_4():
             data_y4 = []
             data_x4 = []
-            for i in range(0, 10):
+            for i in range(0, 11):
                 print(i)
-                supervisor4 = Supervisor(num_sources= (i + 1) * 10,
+                supervisor4 = Supervisor(num_sources= i * 10 + 1,
                                 num_devices=10,
                                 buffer_capacity=10,
                                 generation_freq=Settings.generation_freq,
@@ -337,10 +339,10 @@ def start_button(sender, app_data) -> None:
         def f_5():
             data_y5 = []
             data_x5 = []
-            for i in range(0, 10):
+            for i in range(0, 11):
                 print(i)
                 supervisor5 = Supervisor(num_sources= 10,
-                                num_devices=(i + 1) * 10,
+                                num_devices=i * 10 + 1,
                                 buffer_capacity=10,
                                 generation_freq=Settings.generation_freq,
                                 min_proc_time=Settings.min_processing_time,
@@ -374,11 +376,11 @@ def start_button(sender, app_data) -> None:
         def f_6():
             data_y6 = []
             data_x6 = []
-            for i in range(0, 10):
+            for i in range(0, 11):
                 print(i)
                 supervisor6 = Supervisor(num_sources= 10,
                                 num_devices=10,
-                                buffer_capacity=(i + 1) * 10,
+                                buffer_capacity=i * 10 + 1,
                                 generation_freq=Settings.generation_freq,
                                 min_proc_time=Settings.min_processing_time,
                                 max_proc_time=Settings.max_processing_time,
@@ -411,9 +413,9 @@ def start_button(sender, app_data) -> None:
         def f_7():
             data_y7 = []
             data_x7 = []
-            for i in range(0, 10):
+            for i in range(0, 11):
                 print(i)
-                supervisor7 = Supervisor(num_sources= (i + 1) * 10,
+                supervisor7 = Supervisor(num_sources= i * 10 + 1,
                                 num_devices=10,
                                 buffer_capacity=10,
                                 generation_freq=Settings.generation_freq,
@@ -448,10 +450,10 @@ def start_button(sender, app_data) -> None:
         def f_8():
             data_y8 = []
             data_x8 = []
-            for i in range(0, 10):
+            for i in range(0, 11):
                 print(i)
                 supervisor8 = Supervisor(num_sources= 10,
-                                num_devices=(i + 1) * 10,
+                                num_devices=i * 10 + 1,
                                 buffer_capacity=10,
                                 generation_freq=Settings.generation_freq,
                                 min_proc_time=Settings.min_processing_time,
@@ -485,11 +487,11 @@ def start_button(sender, app_data) -> None:
         def f_9():
             data_y9 = []
             data_x9 = []
-            for i in range(0, 10):
+            for i in range(0, 11):
                 print(i)
                 supervisor9 = Supervisor(num_sources= 10,
                                 num_devices=10,
-                                buffer_capacity=(i + 1) * 10,
+                                buffer_capacity=i * 10 + 1,
                                 generation_freq=Settings.generation_freq,
                                 min_proc_time=Settings.min_processing_time,
                                 max_proc_time=Settings.max_processing_time,
@@ -520,20 +522,20 @@ def start_button(sender, app_data) -> None:
             print("done")
 
         # # вероятность отказа / колво источников
-        # f_1()
-        # # вероятность отказа / размер буффера
-        # f_2()
-        # # вероятность отказа / размер приборов
-        # f_3()
-        # # загруженность приборов / кол-во источников
-        # f_4()
-        # # загруженность приборов / кол-во устройств
-        # f_5()
-        # # загруженность приборов / размер буффера
+        #f_1()
+        # # # вероятность отказа / размер буффера
+        #f_2()
+        # # # вероятность отказа / размер приборов
+        #f_3()
+        # # # загруженность приборов / кол-во источников
+         #f_4()
+        # # # загруженность приборов / кол-во устройств
+         # f_5()
+        # # # загруженность приборов / размер буффера
         # f_6()
-        # среднее время в системе / кол-во источников
+        # # среднее время в системе / кол-во источников
         f_7()
-        # среднее время в системе / кол-во устройств
+        # # среднее время в системе / кол-во устройств
         f_8()
         # среднее время в системе / размер буффера
         f_9()

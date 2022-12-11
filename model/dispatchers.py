@@ -26,7 +26,7 @@ class ProcessingDispatcher:
         return False
 
     def _buffer(self, bid: Bid) -> None:
-        refused_bid = self.buffer.push_with_displace(bid)
+        refused_bid = self.buffer.put(bid)
 
         if refused_bid:
             refused_bid.is_refused = True
@@ -68,15 +68,7 @@ class SelectingDispatcher:
 
     def _get_new_bid(self) -> Bid:
 
-        new_bid = None
-
-        ids = [bid.generating_unit_id for bid in self.buffer]
-        if ids:
-            target_id = min(ids)
-            for id, bid in enumerate(self.buffer):
-                if bid.generating_unit_id == target_id:
-                    new_bid = self.buffer.pop(id)
-                    break
+        new_bid = self.buffer.get()
 
         return new_bid
 

@@ -180,7 +180,8 @@ class Supervisor:
         return (self.memory_buffer,
                 StepRecorder.pushed_bid,
                 StepRecorder.poped_bid,
-                StepRecorder.refused_bid)
+                StepRecorder.refused_bid,
+                self.memory_buffer.pointer)
 
     def start_auto_mode(self):
 
@@ -203,11 +204,11 @@ class Supervisor:
         ill_state = False
 
         cond = 1
-        max_iteration = 200
-        # max_iteration = 50
+        #max_iteration = 200
+        max_iteration = 50
         num_iteration = 0
         while cond > 0.1:
-
+            print(f"cond = {cond} n = {N}")
             num_iteration += 1
             special_stats = SpecialStatsRecord()
 
@@ -220,7 +221,7 @@ class Supervisor:
 
             self.step()
             time, event_type, bid = self.get_event_info()
-            _, _, _, refused_bid = self.get_buffer_info()
+            _, _, _, refused_bid, _ = self.get_buffer_info()
 
             while event_type != EventTag.END.name:
 
@@ -253,7 +254,7 @@ class Supervisor:
 
                 self.step()
                 time, event_type, bid = self.get_event_info()
-                _, _, _, refused_bid = self.get_buffer_info()
+                _, _, _, refused_bid, _ = self.get_buffer_info()
 
             simulation_total_time += time
 
